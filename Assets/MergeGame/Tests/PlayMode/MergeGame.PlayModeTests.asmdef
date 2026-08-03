@@ -1,0 +1,7 @@
+{
+  "name": "MergeGame.PlayModeTests",
+  "references": ["MergeGame.Runtime"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}
+

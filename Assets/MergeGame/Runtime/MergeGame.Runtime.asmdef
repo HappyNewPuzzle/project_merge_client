@@ -1,0 +1,5 @@
+{
+  "name": "MergeGame.Runtime",
+  "rootNamespace": "MergeGame.Client"
+}
+
