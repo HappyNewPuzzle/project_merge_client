@@ -11,6 +11,7 @@ namespace MergeGame.Client.Presentation
     {
         private VisualElement _board; private Label _status; private Label _economy; private Label _quest; private Label _friendCode;
         private int _firstSelection = -1;
+        private VisualElement _root;
         public event Action<int> GenerateRequested;
         public event Action<int, int> MergeRequested;
         public event Action DailyRewardRequested;
@@ -19,13 +20,14 @@ namespace MergeGame.Client.Presentation
 
         private void Awake()
         {
-            var root = GetComponent<UIDocument>().rootVisualElement;
+            var root = GetComponent<UIDocument>().rootVisualElement; _root = root;
             _board = root.Q("board"); _status = root.Q<Label>("status"); _economy = root.Q<Label>("economy");
             _quest = root.Q<Label>("quest"); _friendCode = root.Q<Label>("friend-code");
             root.Q<Button>("daily")?.RegisterCallback<ClickEvent>(_ => DailyRewardRequested?.Invoke());
             root.Q<Button>("claim")?.RegisterCallback<ClickEvent>(_ => QuestClaimRequested?.Invoke());
             root.Q<Button>("add-friend")?.RegisterCallback<ClickEvent>(_ => AddFriendRequested?.Invoke(root.Q<TextField>("friend-input")?.value ?? ""));
         }
+        public void SetInteractionEnabled(bool enabled) => _root?.SetEnabled(enabled);
         public void Render(GameUiModel model)
         {
             _status.text = model.Message; _economy.text = $"에너지 {model.Energy} · 코인 {model.Coins}";

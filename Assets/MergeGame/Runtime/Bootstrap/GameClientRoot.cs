@@ -16,14 +16,15 @@ namespace MergeGame.Client.Bootstrap
         [SerializeField] private bool autoStart = true;
         private GameClientContext _context; private GameHudPresenter _view; private GameUiModel _model;
         private QuestClaimIntent _claimIntent;
+        private bool _busy;
         private void Awake()
         {
             _view = GetComponent<GameHudPresenter>(); _model = new GameUiModel();
-            _view.GenerateRequested += slot => StartCoroutine(RunBoard(_context.Board.Generate(slot, OnBoard)));
-            _view.MergeRequested += (source, target) => StartCoroutine(RunBoard(_context.Board.Merge(source, target, OnBoard)));
-            _view.DailyRewardRequested += () => StartCoroutine(_context.Progression.ClaimDailyReward(OnProgression));
+            _view.GenerateRequested += slot => StartExclusive(_context.Board.Generate(slot, OnBoard));
+            _view.MergeRequested += (source, target) => StartExclusive(_context.Board.Merge(source, target, OnBoard));
+            _view.DailyRewardRequested += () => StartExclusive(_context.Progression.ClaimDailyReward(OnProgression));
             _view.QuestClaimRequested += ClaimQuest;
-            _view.AddFriendRequested += code => StartCoroutine(_context.Social.AddFriend(code, OnSocial));
+            _view.AddFriendRequested += code => StartExclusive(_context.Social.AddFriend(code, OnSocial));
             if (autoStart) StartCoroutine(StartClient());
         }
         private IEnumerator StartClient()
@@ -39,21 +40,25 @@ namespace MergeGame.Client.Bootstrap
             if (social?.Outcome == SocialOutcome.Failed) { ShowError(social.Error); yield break; }
             Render();
         }
-        private IEnumerator RunBoard(IEnumerator operation) { yield return operation; }
+        private void StartExclusive(IEnumerator operation)
+        {
+            if (_busy || _context == null) return;
+            _busy = true; _view.SetInteractionEnabled(false); StartCoroutine(operation);
+        }
+        private void EndExclusive() { _busy = false; _view.SetInteractionEnabled(true); }
         private void OnBoard(BoardCommandResult result)
-        { if (result.Outcome == BoardCommandOutcome.Failed) ShowError(result.Error); else if (result.Outcome == BoardCommandOutcome.ConflictResynchronized) ShowConflict(result.Error); else Render(); }
+        { EndExclusive(); if (result.Outcome == BoardCommandOutcome.Failed) ShowError(result.Error); else if (result.Outcome == BoardCommandOutcome.ConflictResynchronized) ShowConflict(result.Error); else Render(); }
         private void OnProgression(ProgressionResult result)
-        { if (result.Outcome == ProgressionOutcome.Failed) ShowError(result.Error); else if (result.Outcome == ProgressionOutcome.ConflictResynchronized) ShowConflict(result.Error); else { _claimIntent = null; Render(); } }
-        private void OnSocial(SocialCommandResult result) { if (result.Outcome == SocialOutcome.Failed) ShowError(result.Error); else Render(); }
+        { EndExclusive(); if (result.Outcome == ProgressionOutcome.Failed) ShowError(result.Error); else if (result.Outcome == ProgressionOutcome.ConflictResynchronized) ShowConflict(result.Error); else { _claimIntent = null; Render(); } }
+        private void OnSocial(SocialCommandResult result) { EndExclusive(); if (result.Outcome == SocialOutcome.Failed) ShowError(result.Error); else Render(); }
         private void ClaimQuest()
         {
             if (_context.State.Quest == null) return;
             _claimIntent ??= QuestClaimIntent.Create(_context.State.Quest.questId);
-            StartCoroutine(_context.Progression.ClaimQuest(_claimIntent, OnProgression));
+            StartExclusive(_context.Progression.ClaimQuest(_claimIntent, OnProgression));
         }
         private void Render() { _model.Apply(_context.State); _view.Render(_model); }
         private void ShowError(ApiError error) { _model.ApplyError(error); _view.Render(_model); }
         private void ShowConflict(ApiError error) { _model.ApplyError(error); _view.Render(_model); }
     }
 }
-
