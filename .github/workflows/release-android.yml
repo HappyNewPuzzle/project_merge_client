@@ -1,0 +1,39 @@
+name: Android Release Bundle
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: Semantic release version
+      version_code:
+        required: true
+        description: Increasing Android version code
+
+jobs:
+  android:
+    runs-on: [self-hosted, Windows, unity-6000.3, android]
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify client
+        shell: powershell
+        run: ./scripts/verify-client.ps1 -UnityPath '${{ vars.UNITY_EDITOR_PATH }}' -RequireDeploymentUrls
+      - name: Build signed AAB
+        shell: powershell
+        env:
+          MERGEGAME_RELEASE_VERSION: ${{ inputs.version }}
+          MERGEGAME_ANDROID_VERSION_CODE: ${{ inputs.version_code }}
+          MERGEGAME_PRODUCTION_BASE_URL: ${{ vars.MERGEGAME_PRODUCTION_BASE_URL }}
+          MERGEGAME_ANDROID_KEYSTORE_PATH: ${{ secrets.ANDROID_KEYSTORE_PATH }}
+          MERGEGAME_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          MERGEGAME_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          MERGEGAME_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          $args = @('-batchmode','-nographics','-quit','-projectPath',$PWD,'-executeMethod','MergeGame.Client.Editor.ClientReleaseBuild.BuildAndroidBundle','-logFile','Logs/AndroidRelease.log')
+          $p = Start-Process '${{ vars.UNITY_EDITOR_PATH }}' -ArgumentList $args -Wait -PassThru -WindowStyle Hidden
+          if ($p.ExitCode -ne 0) { throw "Release build failed: $($p.ExitCode)" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project-merge-android-${{ inputs.version }}
+          path: Builds/Android/ProjectMerge.aab
+

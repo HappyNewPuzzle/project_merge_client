@@ -15,11 +15,16 @@ namespace MergeGame.Client.Editor
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.happynewpuzzle.projectmerge");
             Build(BuildTarget.Android, "Builds/Android/ProjectMerge.apk");
         }
-        private static void Build(BuildTarget target, string path)
+        public static void BuildAndroidRelease()
+        {
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.happynewpuzzle.projectmerge");
+            Build(BuildTarget.Android, "Builds/Android/ProjectMerge.aab", BuildOptions.None);
+        }
+        private static void Build(BuildTarget target, string path, BuildOptions options = BuildOptions.Development)
         {
             var scenes = EditorBuildSettings.scenes.Where(value => value.enabled).Select(value => value.path).ToArray();
             if (scenes.Length == 0) throw new InvalidOperationException("빌드 Scene이 없습니다.");
-            var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = scenes, target = target, locationPathName = path, options = BuildOptions.Development });
+            var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = scenes, target = target, locationPathName = path, options = options });
             if (report.summary.result != BuildResult.Succeeded) throw new InvalidOperationException("플레이어 빌드가 실패했습니다.");
         }
     }
