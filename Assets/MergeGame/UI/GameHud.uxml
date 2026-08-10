@@ -3,6 +3,7 @@
     <ui:VisualElement class="screen">
         <ui:Label text="Project Merge" class="title" />
         <ui:Label name="status" text="서버 상태를 불러오는 중입니다." class="status" />
+        <ui:VisualElement class="item-atlas-preview" tooltip="머지 아이템 컬렉션" />
         <ui:VisualElement class="summary">
             <ui:Label name="economy" text="에너지 0 · 코인 0" />
             <ui:Label name="quest" text="퀘스트" />
