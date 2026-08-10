@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.IO;
 
 namespace MergeGame.Client.Editor
 {
@@ -21,9 +22,24 @@ namespace MergeGame.Client.Editor
             var document = root.AddComponent<UIDocument>();
             document.panelSettings = panel;
             document.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/MergeGame/UI/GameHud.uxml");
+            var serializedDocument = new SerializedObject(document);
+            serializedDocument.FindProperty("m_PanelSettings").objectReferenceValue = panel;
+            serializedDocument.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(document);
             root.AddComponent<GameHudPresenter>(); root.AddComponent<GameClientRoot>(); root.AddComponent<MobileSessionController>();
             root.AddComponent<SafeAreaController>();
+            document.panelSettings = panel;
+            serializedDocument.Update();
+            serializedDocument.FindProperty("m_PanelSettings").objectReferenceValue = panel;
+            serializedDocument.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(document);
             EditorSceneManager.SaveScene(scene, "Assets/MergeGame/Scenes/MainGame.unity");
+            // Unity 6.3 batchmode가 UIDocument PanelSettings를 0으로 저장하는 경우 정확한 한 필드만 보정합니다.
+            var sceneText = File.ReadAllText("Assets/MergeGame/Scenes/MainGame.unity");
+            var panelGuid = AssetDatabase.AssetPathToGUID(panelPath);
+            sceneText = sceneText.Replace("m_PanelSettings: {fileID: 0}", $"m_PanelSettings: {{fileID: 11400000, guid: {panelGuid}, type: 2}}");
+            File.WriteAllText("Assets/MergeGame/Scenes/MainGame.unity", sceneText);
+            AssetDatabase.ImportAsset("Assets/MergeGame/Scenes/MainGame.unity", ImportAssetOptions.ForceUpdate);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene("Assets/MergeGame/Scenes/MainGame.unity", true) };
             AssetDatabase.SaveAssets();
         }
