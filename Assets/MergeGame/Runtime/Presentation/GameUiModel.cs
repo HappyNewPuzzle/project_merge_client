@@ -13,6 +13,7 @@ namespace MergeGame.Client.Presentation
         public BoardSlotView[] Slots { get; private set; } = Array.Empty<BoardSlotView>();
         public int Energy { get; private set; } public long Coins { get; private set; }
         public string QuestText { get; private set; } = ""; public string FriendCode { get; private set; } = "";
+        public FriendSnapshot[] Friends { get; private set; } = Array.Empty<FriendSnapshot>();
 
         public void Apply(IGameStateStore state)
         {
@@ -20,6 +21,7 @@ namespace MergeGame.Client.Presentation
             Energy = state.Economy?.energy ?? 0; Coins = state.Economy?.coins ?? 0;
             QuestText = state.Quest == null ? "" : $"{state.Quest.currentCount}/{state.Quest.targetCount}";
             FriendCode = state.Social?.friendCode ?? state.SocialProfile?.friendCode ?? "";
+            Friends = state.Social?.friends ?? Array.Empty<FriendSnapshot>();
             Phase = GameUiPhase.Ready; Message = "준비 완료";
         }
         public void ApplyError(ApiError error)

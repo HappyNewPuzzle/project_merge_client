@@ -25,6 +25,9 @@ namespace MergeGame.Client.Bootstrap
             _view.DailyRewardRequested += () => StartExclusive(_context.Progression.ClaimDailyReward(OnProgression));
             _view.QuestClaimRequested += ClaimQuest;
             _view.AddFriendRequested += code => StartExclusive(_context.Social.AddFriend(code, OnSocial));
+            _view.EnergyGiftRequested += id => StartExclusive(_context.Social.SendEnergyGift(id, OnSocial));
+            _view.RetryRequested += () => { if (!_busy) StartCoroutine(StartClient()); };
+            _view.LogoutRequested += () => StartCoroutine(Logout());
             if (autoStart) StartCoroutine(StartClient());
         }
         private IEnumerator StartClient()
@@ -60,5 +63,19 @@ namespace MergeGame.Client.Bootstrap
         private void Render() { _model.Apply(_context.State); _view.Render(_model); }
         private void ShowError(ApiError error) { _model.ApplyError(error); _view.Render(_model); }
         private void ShowConflict(ApiError error) { _model.ApplyError(error); _view.Render(_model); }
+        private IEnumerator Logout()
+        {
+            if (_busy || _context == null) yield break;
+            var session = _context.Tokens.LoadSession();
+            if (session != null)
+            {
+                ApiResult<EmptyResponse> result = null;
+                yield return _context.Api.Logout(new RefreshTokenRequest { refreshToken = session.RefreshToken }, value => result = value);
+                if (result?.IsSuccess != true) { ShowError(result?.Error); yield break; }
+            }
+            _context.Tokens.ClearSession();
+            _context.Api.AccessToken = "";
+            StartCoroutine(StartClient());
+        }
     }
 }

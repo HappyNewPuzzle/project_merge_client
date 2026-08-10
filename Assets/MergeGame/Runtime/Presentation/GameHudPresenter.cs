@@ -17,6 +17,9 @@ namespace MergeGame.Client.Presentation
         public event Action DailyRewardRequested;
         public event Action QuestClaimRequested;
         public event Action<string> AddFriendRequested;
+        public event Action<string> EnergyGiftRequested;
+        public event Action RetryRequested;
+        public event Action LogoutRequested;
 
         private void Awake()
         {
@@ -26,6 +29,8 @@ namespace MergeGame.Client.Presentation
             root.Q<Button>("daily")?.RegisterCallback<ClickEvent>(_ => DailyRewardRequested?.Invoke());
             root.Q<Button>("claim")?.RegisterCallback<ClickEvent>(_ => QuestClaimRequested?.Invoke());
             root.Q<Button>("add-friend")?.RegisterCallback<ClickEvent>(_ => AddFriendRequested?.Invoke(root.Q<TextField>("friend-input")?.value ?? ""));
+            root.Q<Button>("retry")?.RegisterCallback<ClickEvent>(_ => RetryRequested?.Invoke());
+            root.Q<Button>("logout")?.RegisterCallback<ClickEvent>(_ => LogoutRequested?.Invoke());
         }
         public void SetInteractionEnabled(bool enabled) => _root?.SetEnabled(enabled);
         public void Render(GameUiModel model)
@@ -41,6 +46,13 @@ namespace MergeGame.Client.Presentation
                     tooltip = slot.IsEmpty ? $"{slot.SlotIndex}번 빈 슬롯, 선택하면 아이템 생성" : $"{slot.SlotIndex}번 {slot.Name}, 레벨 {slot.Level}"
                 };
                 button.AddToClassList("board-slot"); _board.Add(button);
+            }
+            var friends = _root.Q("friends"); friends?.Clear();
+            foreach (var friend in model.Friends)
+            {
+                var id = friend.playerId;
+                var button = new Button(() => EnergyGiftRequested?.Invoke(id)) { text = friend.displayName + (friend.energyGiftSentToday ? " · 선물 완료" : " · 에너지 선물") };
+                button.SetEnabled(!friend.energyGiftSentToday); friends?.Add(button);
             }
         }
         private void Select(BoardSlotView slot)
