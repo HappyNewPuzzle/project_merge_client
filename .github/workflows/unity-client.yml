@@ -1,0 +1,27 @@
+name: Unity Client Verification
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: [self-hosted, Windows, unity-6000.3]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile, test, and scan
+        shell: powershell
+        run: ./scripts/verify-client.ps1 -UnityPath '${{ vars.UNITY_EDITOR_PATH }}'
+      - name: Publish test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-test-results
+          path: |
+            Logs/Ci*.xml
+            Logs/Ci*.log
+          if-no-files-found: warn
+
