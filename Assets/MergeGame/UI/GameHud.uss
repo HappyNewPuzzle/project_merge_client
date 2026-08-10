@@ -1,0 +1,7 @@
+.screen { flex-grow: 1; padding: 18px; background-color: rgb(30, 34, 42); color: white; }
+.title { font-size: 26px; -unity-font-style: bold; margin-bottom: 8px; }
+.status { margin-bottom: 8px; color: rgb(218, 225, 239); }
+.summary { flex-direction: row; justify-content: space-between; margin-bottom: 12px; }
+.board { flex-direction: row; flex-wrap: wrap; max-width: 560px; }
+.board-slot { width: 76px; height: 68px; margin: 2px; white-space: normal; }
+.actions { margin-top: 12px; max-width: 560px; }

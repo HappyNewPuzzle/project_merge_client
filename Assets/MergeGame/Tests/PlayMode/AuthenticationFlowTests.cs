@@ -7,6 +7,7 @@ using UnityEngine.TestTools;
 using MergeGame.Client.State;
 using MergeGame.Client.Gameplay.Board;
 using MergeGame.Client.Gameplay.Progression;
+using MergeGame.Client.Gameplay.Social;
 
 namespace MergeGame.Client.Tests.PlayMode
 {
@@ -122,11 +123,22 @@ namespace MergeGame.Client.Tests.PlayMode
             Assert.That(api.GetQuestCalls, Is.EqualTo(1));
             Assert.That(result.Outcome, Is.EqualTo(ProgressionOutcome.ConflictResynchronized));
         }
+        [UnityTest]
+        public IEnumerator AddFriend_NormalizesCodeAndReloadsServerSocialState()
+        {
+            var api = new DelayedApi(); var state = new GameStateStore(); var service = new SocialCommandService(api, state);
+            SocialCommandResult result = null; yield return service.AddFriend(" ab12cd34 ", value => result = value);
+            Assert.That(api.LastFriendCode, Is.EqualTo("AB12CD34"));
+            Assert.That(api.GetSocialCalls, Is.EqualTo(1));
+            Assert.That(result.State.friends, Has.Length.EqualTo(1));
+            Assert.That(state.Social.friendCode, Is.EqualTo("ME123456"));
+        }
         private sealed class CoroutineHost : UnityEngine.MonoBehaviour { }
         private sealed class DelayedApi : IMergeGameApiClient
         {
             public int RefreshCalls; public int BoardCalls; public int MergeCalls; public int GetBoardCalls;
             public int DailyRewardCalls; public int GetEconomyCalls; public int GetQuestCalls;
+            public int GetSocialCalls; public string LastFriendCode;
             public long LastMergeRevision; public long LastGenerateBoardRevision; public long LastGenerateEconomyRevision;
             public long LastQuestRevision; public long LastQuestEconomyRevision; public string LastIdempotencyKey;
             public bool FailBoardOnce; public bool ConflictMergeOnce; public bool ConflictDailyReward; public string AccessToken { get; set; }
@@ -184,9 +196,14 @@ namespace MergeGame.Client.Tests.PlayMode
                 yield break;
             }
             public IEnumerator InitializeSocialProfile(Action<ApiResult<SocialProfileSnapshot>> c) { yield break; }
-            public IEnumerator GetSocialProfile(Action<ApiResult<SocialState>> c) { yield break; }
-            public IEnumerator AddFriend(AddFriendRequest b, Action<ApiResult<AddFriendResponse>> c) { yield break; }
-            public IEnumerator SendFriendEnergyGift(string id, Action<ApiResult<EnergyGiftResponse>> c) { yield break; }
+            public IEnumerator GetSocialProfile(Action<ApiResult<SocialState>> c)
+            {
+                GetSocialCalls++; c(ApiResult<SocialState>.Success(new SocialState { friendCode = "ME123456", friends = new[] { new FriendSnapshot { playerId = "f" } } })); yield break;
+            }
+            public IEnumerator AddFriend(AddFriendRequest b, Action<ApiResult<AddFriendResponse>> c)
+            { LastFriendCode = b.friendCode; c(ApiResult<AddFriendResponse>.Success(new AddFriendResponse { friendPlayerId = "f" })); yield break; }
+            public IEnumerator SendFriendEnergyGift(string id, Action<ApiResult<EnergyGiftResponse>> c)
+            { c(ApiResult<EnergyGiftResponse>.Success(new EnergyGiftResponse { recipientEconomy = new EconomySnapshot { energy = 5 } })); yield break; }
         }
     }
 }

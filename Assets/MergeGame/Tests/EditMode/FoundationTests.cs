@@ -6,6 +6,7 @@ using UnityEngine.Networking;
 using System.Collections.Generic;
 using MergeGame.Client.Gameplay.Board;
 using MergeGame.Client.Gameplay.Progression;
+using MergeGame.Client.Presentation;
 
 namespace MergeGame.Client.Tests.EditMode
 {
@@ -72,6 +73,15 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(intent.IdempotencyKey, Has.Length.EqualTo(32));
             Assert.That(sameReference.IdempotencyKey, Is.EqualTo(intent.IdempotencyKey));
             Assert.That(QuestClaimIntent.Create("first-merge").IdempotencyKey, Is.Not.EqualTo(intent.IdempotencyKey));
+        }
+        [TestCase(ApiErrorKind.Network, GameUiPhase.NetworkUnavailable)]
+        [TestCase(ApiErrorKind.Unauthorized, GameUiPhase.AuthenticationRequired)]
+        [TestCase(ApiErrorKind.AccountSuspended, GameUiPhase.AccountSuspended)]
+        [TestCase(ApiErrorKind.RevisionConflict, GameUiPhase.ConflictResynchronized)]
+        public void UiModel_MapsRecoveryStates(ApiErrorKind kind, GameUiPhase phase)
+        {
+            var model = new GameUiModel(); model.ApplyError(ApiResult<object>.Failure(kind).Error);
+            Assert.That(model.Phase, Is.EqualTo(phase));
         }
     }
 }
