@@ -20,6 +20,7 @@ namespace MergeGame.Client.Editor
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.happynewpuzzle.projectmerge");
             Build(BuildTarget.Android, "Builds/Android/ProjectMerge.aab", BuildOptions.None);
         }
+        public static void BuildIosXcode() => Build(BuildTarget.iOS, "Builds/iOS");
         private static void Build(BuildTarget target, string path, BuildOptions options = BuildOptions.Development)
         {
             var scenes = EditorBuildSettings.scenes.Where(value => value.enabled).Select(value => value.path).ToArray();

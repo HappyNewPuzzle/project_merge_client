@@ -1,0 +1,16 @@
+name: iOS Xcode Validation
+on: workflow_dispatch
+jobs:
+  ios:
+    runs-on: [self-hosted, macOS, unity-6000.3, ios]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unity tests
+        shell: pwsh
+        run: ./scripts/verify-client.ps1 -UnityPath '${{ vars.UNITY_EDITOR_PATH }}'
+      - name: Export Xcode project
+        shell: pwsh
+        run: '& "${{ vars.UNITY_EDITOR_PATH }}" -batchmode -nographics -quit -projectPath "$PWD" -executeMethod MergeGame.Client.Editor.ClientBuild.BuildIosXcode -logFile Logs/iOSBuild.log'
+      - name: Xcode compile without signing
+        run: xcodebuild -project Builds/iOS/Unity-iPhone.xcodeproj -scheme Unity-iPhone -configuration Release CODE_SIGNING_ALLOWED=NO build
+
