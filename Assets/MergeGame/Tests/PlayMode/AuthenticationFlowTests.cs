@@ -133,6 +133,24 @@ namespace MergeGame.Client.Tests.PlayMode
             Assert.That(result.State.friends, Has.Length.EqualTo(1));
             Assert.That(state.Social.friendCode, Is.EqualTo("ME123456"));
         }
+        [UnityTest]
+        public IEnumerator SessionLifecycle_RestoresValidAccessTokenWithoutRefresh()
+        {
+            var api = new DelayedApi(); var store = new InMemoryTokenStore(); var now = DateTimeOffset.UtcNow;
+            store.SaveSession(new AuthSession("p", "valid-a", now.AddMinutes(10).ToString("O"), "r", now.AddDays(1).ToString("O")));
+            var refresh = new TokenRefreshCoordinator(api, store); var lifecycle = new SessionLifecycleCoordinator(api, store, refresh);
+            ApiResult<AuthSession> result = null; yield return lifecycle.RestoreOrRefresh(now, value => result = value);
+            Assert.That(result.IsSuccess, Is.True); Assert.That(api.RefreshCalls, Is.Zero); Assert.That(api.AccessToken, Is.EqualTo("valid-a"));
+        }
+        [UnityTest]
+        public IEnumerator SessionLifecycle_RefreshesAccessTokenNearExpiry()
+        {
+            var api = new DelayedApi(); var store = new InMemoryTokenStore(); var now = DateTimeOffset.UtcNow;
+            store.SaveSession(new AuthSession("p", "old", now.AddSeconds(30).ToString("O"), "r", now.AddDays(1).ToString("O")));
+            var refresh = new TokenRefreshCoordinator(api, store); var lifecycle = new SessionLifecycleCoordinator(api, store, refresh);
+            ApiResult<AuthSession> result = null; yield return lifecycle.RestoreOrRefresh(now, value => result = value);
+            Assert.That(result.IsSuccess, Is.True); Assert.That(api.RefreshCalls, Is.EqualTo(1)); Assert.That(api.AccessToken, Is.EqualTo("new-a"));
+        }
         private sealed class CoroutineHost : UnityEngine.MonoBehaviour { }
         private sealed class DelayedApi : IMergeGameApiClient
         {
