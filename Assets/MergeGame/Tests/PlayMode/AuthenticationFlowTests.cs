@@ -6,6 +6,7 @@ using NUnit.Framework;
 using UnityEngine.TestTools;
 using MergeGame.Client.State;
 using MergeGame.Client.Gameplay.Board;
+using MergeGame.Client.Gameplay.Progression;
 
 namespace MergeGame.Client.Tests.PlayMode
 {
@@ -95,12 +96,40 @@ namespace MergeGame.Client.Tests.PlayMode
             Assert.That(result.Outcome, Is.EqualTo(BoardCommandOutcome.Succeeded));
             Assert.That(state.Economy.energy, Is.EqualTo(9));
         }
+        [UnityTest]
+        public IEnumerator QuestClaim_ReusesIntentKeyAndAppliesServerReward()
+        {
+            var api = new DelayedApi(); var state = new GameStateStore();
+            state.ApplyQuest(new QuestSnapshot { questId = "q", revision = 2 });
+            state.ApplyEconomy(new EconomySnapshot { revision = 3, coins = 0 });
+            var intent = QuestClaimIntent.Create("q"); var service = new ProgressionCommandService(api, state);
+            ProgressionResult result = null; yield return service.ClaimQuest(intent, value => result = value);
+            Assert.That(api.LastIdempotencyKey, Is.EqualTo(intent.IdempotencyKey));
+            Assert.That(api.LastQuestRevision, Is.EqualTo(2));
+            Assert.That(api.LastQuestEconomyRevision, Is.EqualTo(3));
+            Assert.That(result.Outcome, Is.EqualTo(ProgressionOutcome.Succeeded));
+            Assert.That(state.Economy.coins, Is.EqualTo(50));
+        }
+        [UnityTest]
+        public IEnumerator DailyRewardConflict_ReloadsWithoutRepeatingRewardRequest()
+        {
+            var api = new DelayedApi { ConflictDailyReward = true }; var state = new GameStateStore();
+            state.ApplyEconomy(new EconomySnapshot { revision = 3 }); state.ApplyQuest(new QuestSnapshot { revision = 2 });
+            var service = new ProgressionCommandService(api, state); ProgressionResult result = null;
+            yield return service.ClaimDailyReward(value => result = value);
+            Assert.That(api.DailyRewardCalls, Is.EqualTo(1));
+            Assert.That(api.GetEconomyCalls, Is.EqualTo(1));
+            Assert.That(api.GetQuestCalls, Is.EqualTo(1));
+            Assert.That(result.Outcome, Is.EqualTo(ProgressionOutcome.ConflictResynchronized));
+        }
         private sealed class CoroutineHost : UnityEngine.MonoBehaviour { }
         private sealed class DelayedApi : IMergeGameApiClient
         {
             public int RefreshCalls; public int BoardCalls; public int MergeCalls; public int GetBoardCalls;
+            public int DailyRewardCalls; public int GetEconomyCalls; public int GetQuestCalls;
             public long LastMergeRevision; public long LastGenerateBoardRevision; public long LastGenerateEconomyRevision;
-            public bool FailBoardOnce; public bool ConflictMergeOnce; public string AccessToken { get; set; }
+            public long LastQuestRevision; public long LastQuestEconomyRevision; public string LastIdempotencyKey;
+            public bool FailBoardOnce; public bool ConflictMergeOnce; public bool ConflictDailyReward; public string AccessToken { get; set; }
             public IEnumerator RefreshAccessToken(RefreshTokenRequest body, Action<ApiResult<GuestLoginResponse>> done)
             {
                 RefreshCalls++; yield return null;
@@ -125,7 +154,7 @@ namespace MergeGame.Client.Tests.PlayMode
                 yield break;
             }
             public IEnumerator InitializeEconomy(Action<ApiResult<EconomySnapshot>> c) { yield break; }
-            public IEnumerator GetEconomy(Action<ApiResult<EconomySnapshot>> c) { c(ApiResult<EconomySnapshot>.Success(new EconomySnapshot { revision = 3 })); yield break; }
+            public IEnumerator GetEconomy(Action<ApiResult<EconomySnapshot>> c) { GetEconomyCalls++; c(ApiResult<EconomySnapshot>.Success(new EconomySnapshot { revision = 10 })); yield break; }
             public IEnumerator GenerateItem(GenerateItemRequest b, Action<ApiResult<GenerateItemResponse>> c)
             {
                 LastGenerateBoardRevision = b.expectedBoardRevision; LastGenerateEconomyRevision = b.expectedEconomyRevision;
@@ -136,10 +165,24 @@ namespace MergeGame.Client.Tests.PlayMode
                 }));
                 yield break;
             }
-            public IEnumerator ClaimDailyReward(RevisionRequest b, Action<ApiResult<EconomySnapshot>> c) { yield break; }
+            public IEnumerator ClaimDailyReward(RevisionRequest b, Action<ApiResult<EconomySnapshot>> c)
+            {
+                DailyRewardCalls++;
+                c(ConflictDailyReward ? ApiResult<EconomySnapshot>.Failure(ApiErrorKind.RevisionConflict, 409) : ApiResult<EconomySnapshot>.Success(new EconomySnapshot { revision = b.expectedRevision + 1, coins = 50 }));
+                yield break;
+            }
             public IEnumerator InitializeQuests(Action<ApiResult<QuestSnapshot>> c) { yield break; }
-            public IEnumerator GetQuests(Action<ApiResult<QuestSnapshot>> c) { yield break; }
-            public IEnumerator ClaimQuestReward(string id, ClaimQuestRewardRequest b, Action<ApiResult<QuestRewardResponse>> c) { yield break; }
+            public IEnumerator GetQuests(Action<ApiResult<QuestSnapshot>> c) { GetQuestCalls++; c(ApiResult<QuestSnapshot>.Success(new QuestSnapshot { revision = 11 })); yield break; }
+            public IEnumerator ClaimQuestReward(string id, ClaimQuestRewardRequest b, Action<ApiResult<QuestRewardResponse>> c)
+            {
+                LastIdempotencyKey = b.idempotencyKey; LastQuestRevision = b.expectedQuestRevision; LastQuestEconomyRevision = b.expectedEconomyRevision;
+                c(ApiResult<QuestRewardResponse>.Success(new QuestRewardResponse
+                {
+                    quest = new QuestSnapshot { questId = id, revision = b.expectedQuestRevision + 1, isClaimed = true },
+                    economy = new EconomySnapshot { revision = b.expectedEconomyRevision + 1, coins = 50 }
+                }));
+                yield break;
+            }
             public IEnumerator InitializeSocialProfile(Action<ApiResult<SocialProfileSnapshot>> c) { yield break; }
             public IEnumerator GetSocialProfile(Action<ApiResult<SocialState>> c) { yield break; }
             public IEnumerator AddFriend(AddFriendRequest b, Action<ApiResult<AddFriendResponse>> c) { yield break; }

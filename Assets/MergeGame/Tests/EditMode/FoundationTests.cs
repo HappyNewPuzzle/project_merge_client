@@ -5,6 +5,7 @@ using NUnit.Framework;
 using UnityEngine.Networking;
 using System.Collections.Generic;
 using MergeGame.Client.Gameplay.Board;
+using MergeGame.Client.Gameplay.Progression;
 
 namespace MergeGame.Client.Tests.EditMode
 {
@@ -63,6 +64,14 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(slots[0].IsEmpty, Is.True);
             Assert.That(slots[2].ItemId, Is.EqualTo("item"));
             Assert.That(slots[2].Level, Is.EqualTo(1));
+        }
+        [Test] public void QuestClaimIntent_KeepsKeyForTheSameUserIntent()
+        {
+            var intent = QuestClaimIntent.Create("first-merge");
+            var sameReference = intent;
+            Assert.That(intent.IdempotencyKey, Has.Length.EqualTo(32));
+            Assert.That(sameReference.IdempotencyKey, Is.EqualTo(intent.IdempotencyKey));
+            Assert.That(QuestClaimIntent.Create("first-merge").IdempotencyKey, Is.Not.EqualTo(intent.IdempotencyKey));
         }
     }
 }
