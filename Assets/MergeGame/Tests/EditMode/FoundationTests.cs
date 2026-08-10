@@ -83,5 +83,21 @@ namespace MergeGame.Client.Tests.EditMode
             var model = new GameUiModel(); model.ApplyError(ApiResult<object>.Failure(kind).Error);
             Assert.That(model.Phase, Is.EqualTo(phase));
         }
+        [Test] public void RetryPolicy_NeverRetriesUnknownMutationButAllowsStableIdempotencyKey()
+        {
+            var network = ApiResult<object>.Failure(ApiErrorKind.Network).Error;
+            Assert.That(NetworkRetryPolicy.CanRetry(network, false, false, 0), Is.False);
+            Assert.That(NetworkRetryPolicy.CanRetry(network, false, true, 0), Is.True);
+            Assert.That(NetworkRetryPolicy.CanRetry(network, true, false, 2), Is.False);
+        }
+        [Test] public void Diagnostics_BoundsMemoryAndStoresOnlySafeMetadata()
+        {
+            var diagnostics = new ClientDiagnostics(2);
+            diagnostics.Record(new ApiObservation(200, ApiErrorKind.None, 10, "a"));
+            diagnostics.Record(new ApiObservation(401, ApiErrorKind.Unauthorized, 20, "b"));
+            diagnostics.Record(new ApiObservation(409, ApiErrorKind.RevisionConflict, 30, "c"));
+            Assert.That(diagnostics.Items, Has.Count.EqualTo(2));
+        }
+
     }
 }
