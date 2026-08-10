@@ -5,6 +5,7 @@
 [Bb]uilds/
 [Ll]ogs/
 [Uu]ser[Ss]ettings/
+.utmp/
 *.log
 *.csproj
 *.sln
@@ -20,4 +21,3 @@
 .idea/
 .vscode/
 sysinfo.txt
-
