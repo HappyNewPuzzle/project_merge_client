@@ -3,6 +3,7 @@ using MergeGame.Client.Authentication;
 using MergeGame.Client.Configuration;
 using NUnit.Framework;
 using UnityEngine.Networking;
+using System.Collections.Generic;
 
 namespace MergeGame.Client.Tests.EditMode
 {
@@ -32,6 +33,22 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(endpoint.BaseUrl, Does.StartWith("https://"));
             Assert.That(endpoint.BaseUrl, Does.Not.Contain("@"));
         }
+        [Test] public void SecureTokenStore_RoundTripsThroughPlatformBoundary()
+        {
+            var secrets = new FakeSecrets(); var store = new SecureTokenStore(secrets);
+            store.SaveGuestCredential(new GuestCredential("player", "guest-secret"));
+            store.SaveSession(new AuthSession("player", "access-secret", "a-exp", "refresh-secret", "r-exp"));
+            Assert.That(store.LoadGuestCredential().PlayerId, Is.EqualTo("player"));
+            Assert.That(store.LoadSession().RefreshToken, Is.EqualTo("refresh-secret"));
+            store.ClearSession();
+            Assert.That(store.LoadSession(), Is.Null);
+        }
+        private sealed class FakeSecrets : IPlatformSecretStore
+        {
+            private readonly Dictionary<string, string> _values = new();
+            public string Get(string key) => _values.TryGetValue(key, out var value) ? value : null;
+            public void Set(string key, string value) => _values[key] = value;
+            public void Delete(string key) => _values.Remove(key);
+        }
     }
 }
-

@@ -2,14 +2,16 @@ using System;
 using System.Collections;
 using MergeGame.Client.Api;
 using MergeGame.Client.Authentication;
+using MergeGame.Client.State;
 
 namespace MergeGame.Client.Bootstrap
 {
     /// <summary>게스트 확보, 로그인, 토큰 저장과 네 가지 서버 상태 초기화를 순서대로 수행합니다.</summary>
     public sealed class GameBootstrapper
     {
-        private readonly IMergeGameApiClient _api; private readonly ISecureTokenStore _store;
-        public GameBootstrapper(IMergeGameApiClient api, ISecureTokenStore store) { _api = api; _store = store; }
+        private readonly IMergeGameApiClient _api; private readonly ISecureTokenStore _store; private readonly IGameStateStore _gameState;
+        public GameBootstrapper(IMergeGameApiClient api, ISecureTokenStore store, IGameStateStore gameState = null)
+        { _api = api; _store = store; _gameState = gameState; }
         public IEnumerator Run(Action<BootstrapResult> completed)
         {
             var credential = _store.LoadGuestCredential();
@@ -34,7 +36,9 @@ namespace MergeGame.Client.Bootstrap
             yield return _api.InitializeEconomy(value => economy = value); if (!Succeeded(economy, completed)) yield break;
             yield return _api.InitializeQuests(value => quest = value); if (!Succeeded(quest, completed)) yield break;
             yield return _api.InitializeSocialProfile(value => social = value); if (!Succeeded(social, completed)) yield break;
-            completed?.Invoke(new BootstrapResult { Status = BootstrapStatus.Completed, State = new InitialGameState { Board = board.Data, Economy = economy.Data, Quest = quest.Data, SocialProfile = social.Data } });
+            var initial = new InitialGameState { Board = board.Data, Economy = economy.Data, Quest = quest.Data, SocialProfile = social.Data };
+            _gameState?.Apply(initial); // 서버 응답 네 가지가 모두 성공한 뒤에만 하나의 초기 상태로 공개합니다.
+            completed?.Invoke(new BootstrapResult { Status = BootstrapStatus.Completed, State = initial });
         }
         private static bool Succeeded<T>(ApiResult<T> result, Action<BootstrapResult> completed)
         {
@@ -44,4 +48,3 @@ namespace MergeGame.Client.Bootstrap
         }
     }
 }
-
