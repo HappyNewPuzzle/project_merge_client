@@ -20,7 +20,37 @@ namespace MergeGame.Client.Editor
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.happynewpuzzle.projectmerge");
             Build(BuildTarget.Android, "Builds/Android/ProjectMerge.aab", BuildOptions.None);
         }
+        /// <summary>서명 비밀값을 저장소에 기록하지 않고 CI 환경에서만 주입해 Google Play용 AAB를 만듭니다.</summary>
+        public static void BuildAndroidStoreRelease()
+        {
+            var keystore = RequireEnvironment("MERGEGAME_ANDROID_KEYSTORE_PATH");
+            var keystorePass = RequireEnvironment("MERGEGAME_ANDROID_KEYSTORE_PASSWORD");
+            var alias = RequireEnvironment("MERGEGAME_ANDROID_KEY_ALIAS");
+            var aliasPass = RequireEnvironment("MERGEGAME_ANDROID_KEY_PASSWORD");
+            var previous = (PlayerSettings.Android.keystoreName, PlayerSettings.Android.keystorePass,
+                PlayerSettings.Android.keyaliasName, PlayerSettings.Android.keyaliasPass);
+            try
+            {
+                PlayerSettings.Android.keystoreName = keystore;
+                PlayerSettings.Android.keystorePass = keystorePass;
+                PlayerSettings.Android.keyaliasName = alias;
+                PlayerSettings.Android.keyaliasPass = aliasPass;
+                BuildAndroidRelease();
+            }
+            finally
+            {
+                // 장시간 실행되는 Editor와 로컬 ProjectSettings에 비밀값이 잔류하지 않도록 원래 값을 복원합니다.
+                PlayerSettings.Android.keystoreName = previous.Item1;
+                PlayerSettings.Android.keystorePass = previous.Item2;
+                PlayerSettings.Android.keyaliasName = previous.Item3;
+                PlayerSettings.Android.keyaliasPass = previous.Item4;
+            }
+        }
         public static void BuildIosXcode() => Build(BuildTarget.iOS, "Builds/iOS");
+        private static string RequireEnvironment(string name) =>
+            Environment.GetEnvironmentVariable(name) is { Length: > 0 } value
+                ? value
+                : throw new InvalidOperationException($"필수 환경 변수가 없습니다: {name}");
         private static void Build(BuildTarget target, string path, BuildOptions options = BuildOptions.Development)
         {
             var scenes = EditorBuildSettings.scenes.Where(value => value.enabled).Select(value => value.path).ToArray();
