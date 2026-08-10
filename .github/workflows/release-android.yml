@@ -38,3 +38,10 @@ jobs:
         with:
           name: project-merge-android-${{ inputs.version }}
           path: Builds/Android/ProjectMerge.aab
+      - name: Generate SHA-256
+        shell: powershell
+        run: Get-FileHash Builds/Android/ProjectMerge.aab -Algorithm SHA256 | Format-List | Out-File Logs/AndroidRelease.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project-merge-android-${{ inputs.version }}-checksum
+          path: Logs/AndroidRelease.sha256
