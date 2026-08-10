@@ -4,6 +4,9 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/MergeGame/Scenes/MainGame.unity
+    guid: 78107b64b378a15419af6e7228c43ff2
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
