@@ -22,6 +22,7 @@ namespace MergeGame.Client.Editor
             document.panelSettings = panel;
             document.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/MergeGame/UI/GameHud.uxml");
             root.AddComponent<GameHudPresenter>(); root.AddComponent<GameClientRoot>(); root.AddComponent<MobileSessionController>();
+            root.AddComponent<SafeAreaController>();
             EditorSceneManager.SaveScene(scene, "Assets/MergeGame/Scenes/MainGame.unity");
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene("Assets/MergeGame/Scenes/MainGame.unity", true) };
             AssetDatabase.SaveAssets();

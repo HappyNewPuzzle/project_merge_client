@@ -35,7 +35,11 @@ namespace MergeGame.Client.Presentation
             _board.Clear();
             foreach (var slot in model.Slots)
             {
-                var button = new Button(() => Select(slot)) { text = slot.IsEmpty ? $"{slot.SlotIndex}\n빈 슬롯" : $"{slot.SlotIndex}\n{slot.Name} Lv.{slot.Level}" };
+                var button = new Button(() => Select(slot))
+                {
+                    text = slot.IsEmpty ? $"{slot.SlotIndex}\n{KoreanStrings.EmptySlot}" : $"{slot.SlotIndex}\n{slot.Name} Lv.{slot.Level}",
+                    tooltip = slot.IsEmpty ? $"{slot.SlotIndex}번 빈 슬롯, 선택하면 아이템 생성" : $"{slot.SlotIndex}번 {slot.Name}, 레벨 {slot.Level}"
+                };
                 button.AddToClassList("board-slot"); _board.Add(button);
             }
         }

@@ -34,10 +34,10 @@ namespace MergeGame.Client.Presentation
             };
             Message = Phase switch
             {
-                GameUiPhase.NetworkUnavailable => "네트워크 연결을 확인하고 다시 시도해 주세요.",
-                GameUiPhase.AuthenticationRequired => "로그인 세션을 다시 확인하고 있습니다.",
-                GameUiPhase.AccountSuspended => "이 계정은 현재 게임을 이용할 수 없습니다.",
-                GameUiPhase.ConflictResynchronized => "다른 요청의 변경을 반영했습니다. 동작을 다시 확인해 주세요.",
+                GameUiPhase.NetworkUnavailable => KoreanStrings.NetworkUnavailable,
+                GameUiPhase.AuthenticationRequired => KoreanStrings.AuthenticationRequired,
+                GameUiPhase.AccountSuspended => KoreanStrings.AccountSuspended,
+                GameUiPhase.ConflictResynchronized => KoreanStrings.Conflict,
                 _ => string.IsNullOrWhiteSpace(error?.TraceId) ? "요청을 처리하지 못했습니다." : "요청을 처리하지 못했습니다. 문의 코드: " + error.TraceId
             };
         }
