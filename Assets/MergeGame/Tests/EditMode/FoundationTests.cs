@@ -4,6 +4,7 @@ using MergeGame.Client.Configuration;
 using NUnit.Framework;
 using UnityEngine.Networking;
 using System.Collections.Generic;
+using MergeGame.Client.Gameplay.Board;
 
 namespace MergeGame.Client.Tests.EditMode
 {
@@ -49,6 +50,19 @@ namespace MergeGame.Client.Tests.EditMode
             public string Get(string key) => _values.TryGetValue(key, out var value) ? value : null;
             public void Set(string key, string value) => _values[key] = value;
             public void Delete(string key) => _values.Remove(key);
+        }
+        [Test] public void BoardPresentation_CreatesServerSizedSlotsWithoutInventingItems()
+        {
+            var board = new BoardState
+            {
+                width = 2, height = 2,
+                items = new[] { new BoardItemState { slotIndex = 2, itemId = "item", name = "Seed", level = 1 } }
+            };
+            var slots = BoardPresentationState.Create(board);
+            Assert.That(slots, Has.Length.EqualTo(4));
+            Assert.That(slots[0].IsEmpty, Is.True);
+            Assert.That(slots[2].ItemId, Is.EqualTo("item"));
+            Assert.That(slots[2].Level, Is.EqualTo(1));
         }
     }
 }

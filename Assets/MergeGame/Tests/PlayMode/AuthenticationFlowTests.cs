@@ -5,6 +5,7 @@ using MergeGame.Client.Authentication;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 using MergeGame.Client.State;
+using MergeGame.Client.Gameplay.Board;
 
 namespace MergeGame.Client.Tests.PlayMode
 {
@@ -59,10 +60,47 @@ namespace MergeGame.Client.Tests.PlayMode
             Assert.That(result.Outcome, Is.EqualTo(MutationOutcome.ConflictResynchronized));
             Assert.That(result.LatestServerState.revision, Is.EqualTo(7));
         }
+        [UnityTest]
+        public IEnumerator BoardMerge_UsesStoredRevisionAndAppliesOnlyServerResponse()
+        {
+            var api = new DelayedApi(); var state = new GameStateStore();
+            state.ApplyBoard(new BoardState { width = 5, height = 7, revision = 4 });
+            var service = new BoardCommandService(api, state); BoardCommandResult result = null;
+            yield return service.Merge(1, 2, value => result = value);
+            Assert.That(api.LastMergeRevision, Is.EqualTo(4));
+            Assert.That(result.Outcome, Is.EqualTo(BoardCommandOutcome.Succeeded));
+            Assert.That(state.Board.revision, Is.EqualTo(5));
+        }
+        [UnityTest]
+        public IEnumerator BoardMergeConflict_ReloadsStateWithoutRepeatingMerge()
+        {
+            var api = new DelayedApi { ConflictMergeOnce = true }; var state = new GameStateStore();
+            state.ApplyBoard(new BoardState { revision = 4 }); state.ApplyEconomy(new EconomySnapshot { revision = 2 });
+            var service = new BoardCommandService(api, state); BoardCommandResult result = null;
+            yield return service.Merge(1, 2, value => result = value);
+            Assert.That(api.MergeCalls, Is.EqualTo(1));
+            Assert.That(api.GetBoardCalls, Is.EqualTo(1));
+            Assert.That(result.Outcome, Is.EqualTo(BoardCommandOutcome.ConflictResynchronized));
+            Assert.That(state.Board.revision, Is.EqualTo(9));
+        }
+        [UnityTest]
+        public IEnumerator Generate_UsesBothServerRevisionsAndAppliesReturnedSnapshots()
+        {
+            var api = new DelayedApi(); var state = new GameStateStore();
+            state.ApplyBoard(new BoardState { revision = 6 }); state.ApplyEconomy(new EconomySnapshot { revision = 8, energy = 10 });
+            var service = new BoardCommandService(api, state); BoardCommandResult result = null;
+            yield return service.Generate(3, value => result = value);
+            Assert.That(api.LastGenerateBoardRevision, Is.EqualTo(6));
+            Assert.That(api.LastGenerateEconomyRevision, Is.EqualTo(8));
+            Assert.That(result.Outcome, Is.EqualTo(BoardCommandOutcome.Succeeded));
+            Assert.That(state.Economy.energy, Is.EqualTo(9));
+        }
         private sealed class CoroutineHost : UnityEngine.MonoBehaviour { }
         private sealed class DelayedApi : IMergeGameApiClient
         {
-            public int RefreshCalls; public int BoardCalls; public bool FailBoardOnce; public string AccessToken { get; set; }
+            public int RefreshCalls; public int BoardCalls; public int MergeCalls; public int GetBoardCalls;
+            public long LastMergeRevision; public long LastGenerateBoardRevision; public long LastGenerateEconomyRevision;
+            public bool FailBoardOnce; public bool ConflictMergeOnce; public string AccessToken { get; set; }
             public IEnumerator RefreshAccessToken(RefreshTokenRequest body, Action<ApiResult<GuestLoginResponse>> done)
             {
                 RefreshCalls++; yield return null;
@@ -79,11 +117,25 @@ namespace MergeGame.Client.Tests.PlayMode
                 else c(ApiResult<BoardState>.Success(new BoardState()));
                 yield break;
             }
-            public IEnumerator GetBoard(Action<ApiResult<BoardState>> c) { yield break; }
-            public IEnumerator MergeItems(MergeBoardItemsRequest b, Action<ApiResult<BoardState>> c) { yield break; }
+            public IEnumerator GetBoard(Action<ApiResult<BoardState>> c) { GetBoardCalls++; c(ApiResult<BoardState>.Success(new BoardState { revision = 9 })); yield break; }
+            public IEnumerator MergeItems(MergeBoardItemsRequest b, Action<ApiResult<BoardState>> c)
+            {
+                MergeCalls++; LastMergeRevision = b.expectedRevision;
+                c(ConflictMergeOnce ? ApiResult<BoardState>.Failure(ApiErrorKind.RevisionConflict, 409, "stale_revision") : ApiResult<BoardState>.Success(new BoardState { revision = b.expectedRevision + 1 }));
+                yield break;
+            }
             public IEnumerator InitializeEconomy(Action<ApiResult<EconomySnapshot>> c) { yield break; }
-            public IEnumerator GetEconomy(Action<ApiResult<EconomySnapshot>> c) { yield break; }
-            public IEnumerator GenerateItem(GenerateItemRequest b, Action<ApiResult<GenerateItemResponse>> c) { yield break; }
+            public IEnumerator GetEconomy(Action<ApiResult<EconomySnapshot>> c) { c(ApiResult<EconomySnapshot>.Success(new EconomySnapshot { revision = 3 })); yield break; }
+            public IEnumerator GenerateItem(GenerateItemRequest b, Action<ApiResult<GenerateItemResponse>> c)
+            {
+                LastGenerateBoardRevision = b.expectedBoardRevision; LastGenerateEconomyRevision = b.expectedEconomyRevision;
+                c(ApiResult<GenerateItemResponse>.Success(new GenerateItemResponse
+                {
+                    board = new BoardState { revision = b.expectedBoardRevision + 1 },
+                    economy = new EconomySnapshot { revision = b.expectedEconomyRevision + 1, energy = 9 }
+                }));
+                yield break;
+            }
             public IEnumerator ClaimDailyReward(RevisionRequest b, Action<ApiResult<EconomySnapshot>> c) { yield break; }
             public IEnumerator InitializeQuests(Action<ApiResult<QuestSnapshot>> c) { yield break; }
             public IEnumerator GetQuests(Action<ApiResult<QuestSnapshot>> c) { yield break; }
