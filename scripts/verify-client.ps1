@@ -14,8 +14,10 @@ if ($LASTEXITCODE -eq 0) { throw 'Forbidden admin key, certificate bypass, or to
 if ($LASTEXITCODE -gt 1) { throw 'Security scan could not run.' }
 
 if ($RequireDeploymentUrls) {
-    & rg -n 'example\.invalid' (Join-Path $project 'Assets\MergeGame\Runtime\Configuration')
-    if ($LASTEXITCODE -eq 0) { throw 'Staging or production URL is still a placeholder.' }
+    $deploymentUrl = $env:MERGEGAME_PRODUCTION_BASE_URL
+    if ([string]::IsNullOrWhiteSpace($deploymentUrl) -or -not $deploymentUrl.StartsWith('https://') -or $deploymentUrl.EndsWith('.invalid')) {
+        throw 'MERGEGAME_PRODUCTION_BASE_URL must be a real HTTPS URL.'
+    }
 }
 
 function Invoke-Unity([string[]]$Arguments, [string]$Name) {

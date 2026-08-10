@@ -1,6 +1,8 @@
 using System;
 using UnityEditor;
 using UnityEditor.Build;
+using System.IO;
+using UnityEngine;
 
 namespace MergeGame.Client.Editor
 {
@@ -17,7 +19,9 @@ namespace MergeGame.Client.Editor
             PlayerSettings.Android.keyaliasName = Required("MERGEGAME_ANDROID_KEY_ALIAS");
             PlayerSettings.Android.keyaliasPass = Required("MERGEGAME_ANDROID_KEY_PASSWORD");
             EditorUserBuildSettings.buildAppBundle = true;
-            ClientBuild.BuildAndroidRelease();
+            CreatePublicConfiguration(Required("MERGEGAME_PRODUCTION_BASE_URL"), "Production");
+            try { ClientBuild.BuildAndroidRelease(); }
+            finally { AssetDatabase.DeleteAsset("Assets/Resources/PublicServerConfiguration.json"); }
         }
         public static void ValidateReleaseConfiguration() { ApplyVersion(); Required("MERGEGAME_PRODUCTION_BASE_URL"); }
         private static void ApplyVersion()
@@ -30,6 +34,14 @@ namespace MergeGame.Client.Editor
         }
         private static string Required(string name) => string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(name))
             ? throw new InvalidOperationException(name + " 환경 변수가 필요합니다.") : Environment.GetEnvironmentVariable(name);
+        private static void CreatePublicConfiguration(string baseUrl, string environment)
+        {
+            if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps || uri.Host.EndsWith(".invalid"))
+                throw new InvalidOperationException("운영 서버 주소는 실제 HTTPS 주소여야 합니다.");
+            Directory.CreateDirectory("Assets/Resources");
+            File.WriteAllText("Assets/Resources/PublicServerConfiguration.json", JsonUtility.ToJson(new PublicConfiguration { environment = environment, baseUrl = baseUrl }));
+            AssetDatabase.Refresh();
+        }
+        [Serializable] private sealed class PublicConfiguration { public string environment; public string baseUrl; }
     }
 }
-
