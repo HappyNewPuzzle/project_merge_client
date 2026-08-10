@@ -99,5 +99,16 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(diagnostics.Items, Has.Count.EqualTo(2));
         }
 
+        [Test] public void SupportSnapshot_ExcludesSensitiveServerMessage()
+        {
+            var error = MergeGameApiClient.ClassifyError(UnityWebRequest.Result.ProtocolError, 403,
+                new ApiProblem { code = "account_suspended", message = "private moderation note", traceId = "trace-safe" }, null);
+            var text = SupportDiagnosticSnapshot.From(error).ToSupportText();
+            Assert.That(text, Does.Contain("AccountSuspended"));
+            Assert.That(text, Does.Contain("trace-safe"));
+            Assert.That(text, Does.Not.Contain("private moderation note"));
+            Assert.That(text, Does.Not.Contain("token"));
+        }
+
     }
 }
