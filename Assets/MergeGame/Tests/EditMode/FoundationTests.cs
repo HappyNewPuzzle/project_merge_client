@@ -93,6 +93,8 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(catalog.levelSprites, Has.Length.EqualTo(9));
             Assert.That(catalog.Find("workshop", 1).name, Is.EqualTo("01_seed_packet"));
             Assert.That(catalog.Find("workshop", 9).name, Is.EqualTo("09_lantern"));
+            Assert.That(catalog.Find("workshop", 1).rect.width, Is.EqualTo(418));
+            Assert.That(catalog.Find("workshop", 1).rect.height, Is.EqualTo(418));
             Assert.That(catalog.Find("unknown", 1), Is.Null);
         }
         [Test] public void QuestClaimIntent_KeepsKeyForTheSameUserIntent()

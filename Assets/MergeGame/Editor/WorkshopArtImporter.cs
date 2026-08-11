@@ -20,7 +20,11 @@ namespace MergeGame.Client.Editor
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(AtlasPath);
             if (texture == null) throw new InvalidOperationException("워크숍 아이템 atlas를 찾을 수 없습니다.");
             var importer = (TextureImporter)AssetImporter.GetAtPath(AtlasPath);
-            var cellWidth = texture.width / 3; var cellHeight = texture.height / 3;
+            // Texture2D.width는 NPOT 축소가 적용된 임포트 결과일 수 있으므로 반드시 원본 파일 크기를 사용합니다.
+            importer.GetSourceTextureWidthAndHeight(out var sourceWidth, out var sourceHeight);
+            if (sourceWidth % 3 != 0 || sourceHeight % 3 != 0)
+                throw new InvalidOperationException("atlas 원본 크기가 3×3 셀로 정확히 나누어지지 않습니다.");
+            var cellWidth = sourceWidth / 3; var cellHeight = sourceHeight / 3;
             var sprites = new SpriteMetaData[Names.Length];
             for (var index = 0; index < Names.Length; index++)
             {
@@ -33,6 +37,7 @@ namespace MergeGame.Client.Editor
                 };
             }
             importer.textureType = TextureImporterType.Sprite; importer.spriteImportMode = SpriteImportMode.Multiple;
+            importer.npotScale = TextureImporterNPOTScale.None; // 1254px 원본이 1024px로 축소되어 rect가 어긋나는 것을 방지합니다.
             importer.mipmapEnabled = false; importer.alphaIsTransparency = true; importer.spritesheet = sprites;
             importer.SaveAndReimport();
 
