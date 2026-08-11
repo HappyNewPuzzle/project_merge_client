@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <Style src="GameHud.uss" />
-    <ui:VisualElement class="screen">
+    <ui:ScrollView class="screen" mode="Vertical">
         <ui:Label text="Project Merge" class="title" />
         <ui:Label name="status" text="서버 상태를 불러오는 중입니다." class="status" />
         <ui:VisualElement class="item-atlas-preview" tooltip="머지 아이템 컬렉션" />
@@ -10,6 +10,7 @@
             <ui:Label name="friend-code" text="친구 코드" />
         </ui:VisualElement>
         <ui:VisualElement name="board" class="board" />
+        <ui:Label text="빈 칸을 누르면 생성 · 같은 레벨 아이템 위로 드래그하면 머지" class="board-help" />
         <ui:VisualElement class="actions">
             <ui:Button name="daily" text="일일 보상" />
             <ui:Button name="claim" text="퀘스트 보상" />
@@ -19,5 +20,5 @@
             <ui:Button name="retry" text="다시 시도" />
             <ui:Button name="logout" text="로그아웃" />
         </ui:VisualElement>
-    </ui:VisualElement>
+    </ui:ScrollView>
 </ui:UXML>

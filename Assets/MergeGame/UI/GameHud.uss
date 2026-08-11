@@ -1,8 +1,15 @@
-.screen { flex-grow: 1; padding: 18px; background-color: rgb(30, 34, 42); color: white; }
+.screen { flex-grow: 1; padding: 14px; background-color: rgb(30, 34, 42); color: white; }
 .title { font-size: 26px; -unity-font-style: bold; margin-bottom: 8px; }
 .status { margin-bottom: 8px; color: rgb(218, 225, 239); }
-.item-atlas-preview { width: 180px; height: 180px; background-image: url('../Art/Items/WorkshopItemsAtlas.png'); -unity-background-scale-mode: scale-to-fit; }
-.summary { flex-direction: row; justify-content: space-between; margin-bottom: 12px; }
-.board { flex-direction: row; flex-wrap: wrap; max-width: 560px; }
-.board-slot { width: 76px; height: 68px; margin: 2px; white-space: normal; }
-.actions { margin-top: 12px; max-width: 560px; }
+.item-atlas-preview { width: 140px; height: 140px; align-self: center; background-image: url('../Art/Items/WorkshopItemsAtlas.png'); -unity-background-scale-mode: scale-to-fit; }
+.summary { flex-direction: row; flex-wrap: wrap; justify-content: space-between; margin-bottom: 12px; }
+.summary Label { margin-right: 8px; margin-bottom: 4px; }
+.board { position: relative; flex-direction: row; flex-wrap: wrap; width: 100%; max-width: 560px; align-self: center; }
+.board-slot { width: 23%; min-width: 58px; height: 72px; margin: 1%; white-space: normal; align-items: center; justify-content: center; border-width: 2px; border-color: rgb(72, 82, 98); border-radius: 8px; }
+.board-slot-empty { background-color: rgb(39, 45, 55); }
+.board-slot-item { background-color: rgb(93, 72, 48); border-color: rgb(194, 151, 89); }
+.board-slot-dragging { opacity: 0.35; }
+.board-slot-merge-target { border-color: rgb(97, 232, 139); background-color: rgb(53, 112, 73); }
+.drag-ghost { position: absolute; width: 76px; height: 68px; align-items: center; justify-content: center; background-color: rgba(194, 151, 89, 0.9); border-radius: 8px; color: white; }
+.board-help { margin-top: 6px; color: rgb(170, 184, 207); font-size: 12px; }
+.actions { margin-top: 12px; width: 100%; max-width: 560px; align-self: center; padding-bottom: 18px; }

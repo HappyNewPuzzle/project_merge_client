@@ -2,6 +2,7 @@ using MergeGame.Client.Api;
 using MergeGame.Client.Authentication;
 using MergeGame.Client.Configuration;
 using NUnit.Framework;
+using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections.Generic;
 using MergeGame.Client.Gameplay.Board;
@@ -65,6 +66,25 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(slots[0].IsEmpty, Is.True);
             Assert.That(slots[2].ItemId, Is.EqualTo("item"));
             Assert.That(slots[2].Level, Is.EqualTo(1));
+        }
+        [Test] public void BoardMergeRules_RequireSameChainLevelAndDifferentSlots()
+        {
+            var source = new BoardSlotView(0, new BoardItemState { itemId = "a", chainId = "workshop", level = 2 });
+            var compatible = new BoardSlotView(1, new BoardItemState { itemId = "b", chainId = "workshop", level = 2 });
+            var wrongLevel = new BoardSlotView(2, new BoardItemState { itemId = "c", chainId = "workshop", level = 3 });
+            var wrongChain = new BoardSlotView(3, new BoardItemState { itemId = "d", chainId = "garden", level = 2 });
+            Assert.That(BoardMergeRules.CanMerge(source, compatible), Is.True);
+            Assert.That(BoardMergeRules.CanMerge(source, wrongLevel), Is.False);
+            Assert.That(BoardMergeRules.CanMerge(source, wrongChain), Is.False);
+            Assert.That(BoardMergeRules.CanMerge(source, source), Is.False);
+        }
+        [Test] public void SafeAreaInsets_ConvertScreenPixelsToPanelUnits()
+        {
+            var insets = SafeAreaController.CalculateInsets(new Rect(0, 80, 1080, 2240), 1080, 2400, 720, 1280);
+            Assert.That(insets.Left, Is.EqualTo(0));
+            Assert.That(insets.Top, Is.EqualTo(42.666f).Within(0.01f));
+            Assert.That(insets.Right, Is.EqualTo(0));
+            Assert.That(insets.Bottom, Is.EqualTo(42.666f).Within(0.01f));
         }
         [Test] public void QuestClaimIntent_KeepsKeyForTheSameUserIntent()
         {
