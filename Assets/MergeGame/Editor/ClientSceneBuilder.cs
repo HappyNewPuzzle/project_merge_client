@@ -28,6 +28,14 @@ namespace MergeGame.Client.Editor
             EditorUtility.SetDirty(document);
             root.AddComponent<GameHudPresenter>(); root.AddComponent<GameClientRoot>(); root.AddComponent<MobileSessionController>();
             root.AddComponent<SafeAreaController>();
+            var cameraObject = new GameObject("MainCamera");
+            cameraObject.tag = "MainCamera";
+            cameraObject.transform.position = new Vector3(0f, 0f, -10f);
+            var camera = cameraObject.AddComponent<Camera>();
+            camera.orthographic = true; camera.orthographicSize = 5f;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.055f, 0.067f, 0.086f, 1f);
+            cameraObject.AddComponent<AudioListener>();
             document.panelSettings = panel;
             serializedDocument.Update();
             serializedDocument.FindProperty("m_PanelSettings").objectReferenceValue = panel;

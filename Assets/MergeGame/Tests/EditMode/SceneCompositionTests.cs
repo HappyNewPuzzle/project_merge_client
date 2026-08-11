@@ -21,6 +21,11 @@ namespace MergeGame.Client.Tests.EditMode
             var document = root.GetComponent<UIDocument>();
             Assert.That(document.panelSettings, Is.Not.Null);
             Assert.That(document.visualTreeAsset, Is.Not.Null);
+            var camera = Camera.main;
+            Assert.That(camera, Is.Not.Null);
+            Assert.That(camera.orthographic, Is.True);
+            Assert.That(camera.clearFlags, Is.EqualTo(CameraClearFlags.SolidColor));
+            Assert.That(camera.GetComponent<AudioListener>(), Is.Not.Null);
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         }
         [Test] public void Diagnostics_RemainsBoundedDuringLongSession()
