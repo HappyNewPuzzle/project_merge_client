@@ -17,6 +17,7 @@ namespace MergeGame.Client.Editor
         }
         public static void BuildAndroidRelease()
         {
+            RejectOfflineMockForRelease(NamedBuildTarget.Android);
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.happynewpuzzle.projectmerge");
             Build(BuildTarget.Android, "Builds/Android/ProjectMerge.aab", BuildOptions.None);
         }
@@ -47,6 +48,12 @@ namespace MergeGame.Client.Editor
             }
         }
         public static void BuildIosXcode() => Build(BuildTarget.iOS, "Builds/iOS");
+        private static void RejectOfflineMockForRelease(NamedBuildTarget target)
+        {
+            var defines = PlayerSettings.GetScriptingDefineSymbols(target);
+            if (defines.Split(';').Contains("MERGEGAME_OFFLINE_MOCK"))
+                throw new InvalidOperationException("배포 빌드에는 MERGEGAME_OFFLINE_MOCK define을 포함할 수 없습니다.");
+        }
         private static string RequireEnvironment(string name) =>
             Environment.GetEnvironmentVariable(name) is { Length: > 0 } value
                 ? value

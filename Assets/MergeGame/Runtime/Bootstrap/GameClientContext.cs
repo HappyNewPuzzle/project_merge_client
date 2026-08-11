@@ -44,6 +44,24 @@ namespace MergeGame.Client.Bootstrap
                 Social = new SocialCommandService(api, state)
             };
         }
+        /// <summary>실제 socket을 열지 않고 API 계약과 서버 권위 상태 전이를 연습하는 Editor·테스트 전용 조립 경로입니다.</summary>
+        public static GameClientContext CreateOffline(MockMergeGameApiClient mock = null, ISecureTokenStore tokens = null)
+        {
+#if !UNITY_EDITOR && (MERGEGAME_STAGING || MERGEGAME_PRODUCTION)
+            throw new System.InvalidOperationException("Staging/Production 빌드에서는 Offline Mock을 사용할 수 없습니다.");
+#else
+            var api = mock ?? new MockMergeGameApiClient();
+            var store = tokens ?? new InMemoryTokenStore();
+            var state = new GameStateStore();
+            return new GameClientContext
+            {
+                Api = api, Tokens = store, State = state,
+                Bootstrapper = new GameBootstrapper(api, store, state),
+                SessionLifecycle = new SessionLifecycleCoordinator(api, store, new TokenRefreshCoordinator(api, store)),
+                Board = new BoardCommandService(api, state), Progression = new ProgressionCommandService(api, state),
+                Social = new SocialCommandService(api, state)
+            };
+#endif
+        }
     }
 }
-

@@ -33,7 +33,12 @@ namespace MergeGame.Client.Bootstrap
         private IEnumerator StartClient()
         {
 #if UNITY_EDITOR
+#if MERGEGAME_USE_LIVE_SERVER
             _context = GameClientContextFactory.Create(Configuration.ServerEndpointCatalog.Current.BaseUrl, new InMemoryTokenStore());
+#else
+            // Editor 기본값은 완전 오프라인입니다. 실제 서버 통합이 필요할 때만 명시적으로 define을 켭니다.
+            _context = GameClientContextFactory.CreateOffline();
+#endif
 #else
             _context = GameClientContextFactory.CreateForPlayer();
 #endif
