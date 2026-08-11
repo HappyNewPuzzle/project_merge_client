@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4e2406cd930a284e8dbc045ce246460, type: 3}
+  m_Name: WorkshopItemArtCatalog
+  m_EditorClassIdentifier: MergeGame.Runtime::MergeGame.Client.Presentation.WorkshopItemArtCatalog
+  levelSprites:
+  - {fileID: 3739635244166351656, guid: cf92901630251dc4384eede81fc407c8, type: 3}
+  - {fileID: 6047192062505352095, guid: cf92901630251dc4384eede81fc407c8, type: 3}
+  - {fileID: -2024381705342220758, guid: cf92901630251dc4384eede81fc407c8, type: 3}
+  - {fileID: -2638618218160884538, guid: cf92901630251dc4384eede81fc407c8, type: 3}
+  - {fileID: 7267207894069459181, guid: cf92901630251dc4384eede81fc407c8, type: 3}
+  - {fileID: -904464763872079669, guid: cf92901630251dc4384eede81fc407c8, type: 3}
+  - {fileID: -6414853484182429883, guid: cf92901630251dc4384eede81fc407c8, type: 3}
+  - {fileID: -3582432612211085946, guid: cf92901630251dc4384eede81fc407c8, type: 3}
+  - {fileID: -5429365920314895697, guid: cf92901630251dc4384eede81fc407c8, type: 3}

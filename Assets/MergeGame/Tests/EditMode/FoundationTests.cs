@@ -86,6 +86,15 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(insets.Right, Is.EqualTo(0));
             Assert.That(insets.Bottom, Is.EqualTo(42.666f).Within(0.01f));
         }
+        [Test] public void WorkshopArtCatalog_ContainsNineOrderedSprites()
+        {
+            var catalog = Resources.Load<WorkshopItemArtCatalog>("WorkshopItemArtCatalog");
+            Assert.That(catalog, Is.Not.Null);
+            Assert.That(catalog.levelSprites, Has.Length.EqualTo(9));
+            Assert.That(catalog.Find("workshop", 1).name, Is.EqualTo("01_seed_packet"));
+            Assert.That(catalog.Find("workshop", 9).name, Is.EqualTo("09_lantern"));
+            Assert.That(catalog.Find("unknown", 1), Is.Null);
+        }
         [Test] public void QuestClaimIntent_KeepsKeyForTheSameUserIntent()
         {
             var intent = QuestClaimIntent.Create("first-merge");

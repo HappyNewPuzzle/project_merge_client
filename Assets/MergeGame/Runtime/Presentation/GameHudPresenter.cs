@@ -14,6 +14,7 @@ namespace MergeGame.Client.Presentation
         private readonly Dictionary<int, VisualElement> _slotElements = new();
         private BoardSlotView _dragSource; private VisualElement _dragElement; private Label _dragGhost;
         private int _pointerId = -1; private Vector2 _pointerStart; private bool _dragging;
+        private WorkshopItemArtCatalog _itemArt;
         private VisualElement _root;
         public event Action<int> GenerateRequested;
         public event Action<int, int> MergeRequested;
@@ -27,6 +28,7 @@ namespace MergeGame.Client.Presentation
         private void Awake()
         {
             var root = GetComponent<UIDocument>().rootVisualElement; _root = root;
+            _itemArt = Resources.Load<WorkshopItemArtCatalog>("WorkshopItemArtCatalog");
             _board = root.Q("board"); _status = root.Q<Label>("status"); _economy = root.Q<Label>("economy");
             _quest = root.Q<Label>("quest"); _friendCode = root.Q<Label>("friend-code");
             root.Q<Button>("daily")?.RegisterCallback<ClickEvent>(_ => DailyRewardRequested?.Invoke());
@@ -50,6 +52,12 @@ namespace MergeGame.Client.Presentation
                 var element = new VisualElement { userData = slot,
                     tooltip = slot.IsEmpty ? $"{slot.SlotIndex}번 빈 슬롯, 누르면 아이템 생성" : $"{slot.SlotIndex}번 {slot.Name}, 레벨 {slot.Level}. 같은 아이템으로 드래그해 머지" };
                 element.AddToClassList("board-slot"); element.AddToClassList(slot.IsEmpty ? "board-slot-empty" : "board-slot-item");
+                var sprite = _itemArt?.Find(slot.ChainId, slot.Level);
+                if (sprite != null)
+                {
+                    var art = new VisualElement { pickingMode = PickingMode.Ignore };
+                    art.style.backgroundImage = new StyleBackground(sprite); art.AddToClassList("board-item-art"); element.Add(art);
+                }
                 element.Add(new Label(slot.IsEmpty ? $"{slot.SlotIndex}\n{KoreanStrings.EmptySlot}" : $"{slot.SlotIndex}\n{slot.Name}\nLv.{slot.Level}"));
                 _slotElements[slot.SlotIndex] = element; _board.Add(element);
             }
@@ -93,6 +101,8 @@ namespace MergeGame.Client.Presentation
         {
             _dragging = true; _dragElement.AddToClassList("board-slot-dragging");
             _dragGhost = new Label($"{_dragSource.Name}\nLv.{_dragSource.Level}") { pickingMode = PickingMode.Ignore };
+            var sprite = _itemArt?.Find(_dragSource.ChainId, _dragSource.Level);
+            if (sprite != null) _dragGhost.style.backgroundImage = new StyleBackground(sprite);
             _dragGhost.AddToClassList("drag-ghost"); _board.Add(_dragGhost);
         }
         private void HighlightTargets()
