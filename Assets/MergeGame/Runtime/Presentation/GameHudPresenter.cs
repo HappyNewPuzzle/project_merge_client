@@ -10,13 +10,13 @@ namespace MergeGame.Client.Presentation
     [RequireComponent(typeof(UIDocument))]
     public sealed class GameHudPresenter : MonoBehaviour
     {
-        private VisualElement _board; private Label _status; private Label _economy; private Label _quest; private Label _friendCode;
+        private VisualElement _board; private Label _status; private Label _economy; private Label _quest; private Label _friendCode; private Button _generator;
         private readonly Dictionary<int, VisualElement> _slotElements = new();
         private BoardSlotView _dragSource; private VisualElement _dragElement; private Label _dragGhost;
         private int _pointerId = -1; private Vector2 _pointerStart; private bool _dragging;
         private WorkshopItemArtCatalog _itemArt;
         private VisualElement _root;
-        public event Action<int> GenerateRequested;
+        public event Action GenerateRequested;
         public event Action<int, int> MergeRequested;
         public event Action DailyRewardRequested;
         public event Action QuestClaimRequested;
@@ -31,6 +31,13 @@ namespace MergeGame.Client.Presentation
             _itemArt = Resources.Load<WorkshopItemArtCatalog>("WorkshopItemArtCatalog");
             _board = root.Q("board"); _status = root.Q<Label>("status"); _economy = root.Q<Label>("economy");
             _quest = root.Q<Label>("quest"); _friendCode = root.Q<Label>("friend-code");
+            _generator = root.Q<Button>("generator");
+            _generator?.RegisterCallback<ClickEvent>(_ =>
+            {
+                _generator.AddToClassList("generator-producing");
+                _generator.schedule.Execute(() => _generator.RemoveFromClassList("generator-producing")).StartingIn(180);
+                GenerateRequested?.Invoke();
+            });
             root.Q<Button>("daily")?.RegisterCallback<ClickEvent>(_ => DailyRewardRequested?.Invoke());
             root.Q<Button>("claim")?.RegisterCallback<ClickEvent>(_ => QuestClaimRequested?.Invoke());
             root.Q<Button>("add-friend")?.RegisterCallback<ClickEvent>(_ => AddFriendRequested?.Invoke(root.Q<TextField>("friend-input")?.value ?? ""));
@@ -46,11 +53,14 @@ namespace MergeGame.Client.Presentation
         {
             _status.text = model.Message; _economy.text = $"에너지 {model.Energy} · 코인 {model.Coins}";
             _quest.text = "퀘스트 " + model.QuestText; _friendCode.text = "친구 코드 " + model.FriendCode;
+            var generatorSprite = _itemArt?.Find("workshop", 5);
+            if (generatorSprite != null) _generator.style.backgroundImage = new StyleBackground(generatorSprite);
+            _generator?.SetEnabled(model.Phase == GameUiPhase.Ready && model.Energy > 0 && BoardGeneratorPlacement.FindFirstEmpty(model.Slots) >= 0);
             CancelDrag(); _board.Clear(); _slotElements.Clear();
             foreach (var slot in model.Slots)
             {
                 var element = new VisualElement { userData = slot,
-                    tooltip = slot.IsEmpty ? $"{slot.SlotIndex}번 빈 슬롯, 누르면 아이템 생성" : $"{slot.SlotIndex}번 {slot.Name}, 레벨 {slot.Level}. 같은 아이템으로 드래그해 머지" };
+                    tooltip = slot.IsEmpty ? $"{slot.SlotIndex}번 빈 슬롯" : $"{slot.SlotIndex}번 {slot.Name}, 레벨 {slot.Level}. 같은 아이템으로 드래그해 머지" };
                 element.AddToClassList("board-slot"); element.AddToClassList(slot.IsEmpty ? "board-slot-empty" : "board-slot-item");
                 var sprite = _itemArt?.Find(slot.ChainId, slot.Level);
                 if (sprite != null)
@@ -73,6 +83,7 @@ namespace MergeGame.Client.Presentation
         {
             var element = FindSlot(evt.target as VisualElement);
             if (element == null || element.userData is not BoardSlotView slot) return;
+            if (slot.IsEmpty) return; // 아이템 생성은 보드 빈 칸이 아니라 전용 생성기만 담당합니다.
             _pointerId = evt.pointerId; _pointerStart = evt.position; _dragSource = slot; _dragElement = element;
             _board.CapturePointer(evt.pointerId); evt.StopPropagation();
         }
@@ -92,8 +103,6 @@ namespace MergeGame.Client.Presentation
             var target = hasTarget ? (BoardSlotView)targetElement.userData : default;
             if (_dragging && hasTarget && BoardMergeRules.CanMerge(_dragSource, target))
                 MergeRequested?.Invoke(_dragSource.SlotIndex, target.SlotIndex);
-            else if (!_dragging && _dragSource.IsEmpty)
-                GenerateRequested?.Invoke(_dragSource.SlotIndex);
             CancelDrag(); evt.StopPropagation();
         }
         private void OnPointerCancel(PointerCancelEvent evt) { if (evt.pointerId == _pointerId) CancelDrag(); }
@@ -125,5 +134,7 @@ namespace MergeGame.Client.Presentation
             while (element != null && element.userData is not BoardSlotView) element = element.parent;
             return element;
         }
+        /// <summary>로컬에서 값을 확정하지 않고 요청 불가 이유만 사용자에게 안내합니다.</summary>
+        public void SetStatus(string message) { if (_status != null) _status.text = message ?? string.Empty; }
     }
 }

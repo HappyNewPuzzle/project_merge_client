@@ -8,8 +8,11 @@
             <ui:Label name="quest" text="퀘스트" />
             <ui:Label name="friend-code" text="친구 코드" />
         </ui:VisualElement>
+        <ui:VisualElement class="generator-panel">
+            <ui:Button name="generator" text="생성기\n눌러서 아이템 생산" class="generator" tooltip="에너지 1을 사용해 빈 슬롯에 레벨 1 아이템을 생성합니다." />
+        </ui:VisualElement>
         <ui:VisualElement name="board" class="board" />
-        <ui:Label text="빈 칸을 누르면 생성 · 같은 레벨 아이템 위로 드래그하면 머지" class="board-help" />
+        <ui:Label text="생성기를 눌러 아이템 생산 · 같은 레벨 아이템 위로 드래그하면 머지" class="board-help" />
         <ui:VisualElement class="actions">
             <ui:Button name="daily" text="일일 보상" />
             <ui:Button name="claim" text="퀘스트 보상" />

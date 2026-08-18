@@ -28,6 +28,17 @@ namespace MergeGame.Client.Gameplay.Board
             !string.IsNullOrWhiteSpace(source.ChainId) && source.ChainId == target.ChainId;
     }
 
+    /// <summary>기존 API가 targetSlot을 요구하는 동안 생성기 의도를 보낼 첫 빈 슬롯을 결정합니다.</summary>
+    public static class BoardGeneratorPlacement
+    {
+        public static int FindFirstEmpty(BoardSlotView[] slots)
+        {
+            if (slots == null) return -1;
+            foreach (var slot in slots) if (slot.IsEmpty) return slot.SlotIndex;
+            return -1;
+        }
+    }
+
     /// <summary>서버 보드 스냅샷을 UI가 바로 그릴 수 있는 고정 슬롯 배열로 투영합니다.</summary>
     public static class BoardPresentationState
     {

@@ -78,6 +78,13 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(BoardMergeRules.CanMerge(source, wrongChain), Is.False);
             Assert.That(BoardMergeRules.CanMerge(source, source), Is.False);
         }
+        [Test] public void GeneratorPlacement_SelectsFirstEmptyAndRejectsFullBoard()
+        {
+            var empty = new BoardSlotView(3, null);
+            var occupied = new BoardSlotView(1, new BoardItemState { itemId = "item", chainId = "workshop", level = 1 });
+            Assert.That(BoardGeneratorPlacement.FindFirstEmpty(new[] { occupied, empty }), Is.EqualTo(3));
+            Assert.That(BoardGeneratorPlacement.FindFirstEmpty(new[] { occupied }), Is.EqualTo(-1));
+        }
         [Test] public void SafeAreaInsets_ConvertScreenPixelsToPanelUnits()
         {
             var insets = SafeAreaController.CalculateInsets(new Rect(0, 80, 1080, 2240), 1080, 2400, 720, 1280);

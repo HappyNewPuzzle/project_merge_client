@@ -3,6 +3,10 @@
 .status { margin-bottom: 8px; color: rgb(218, 225, 239); }
 .summary { flex-direction: row; flex-wrap: wrap; justify-content: space-between; margin-bottom: 12px; }
 .summary Label { margin-right: 8px; margin-bottom: 4px; }
+.generator-panel { align-items: center; margin-bottom: 10px; }
+.generator { width: 150px; height: 112px; padding-top: 66px; -unity-background-scale-mode: scale-to-fit; background-color: rgb(73, 57, 39); border-width: 3px; border-color: rgb(218, 167, 88); border-radius: 14px; color: white; -unity-font-style: bold; }
+.generator:hover { border-color: rgb(255, 220, 135); }
+.generator-producing { scale: 0.92 0.92; opacity: 0.7; }
 .board { position: relative; flex-direction: row; flex-wrap: wrap; width: 100%; max-width: 560px; align-self: center; }
 .board-slot { width: 23%; min-width: 58px; height: 104px; margin: 1%; white-space: normal; align-items: center; justify-content: center; border-width: 2px; border-color: rgb(72, 82, 98); border-radius: 8px; }
 .board-item-art { width: 54px; height: 54px; -unity-background-scale-mode: scale-to-fit; }

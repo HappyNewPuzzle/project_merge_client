@@ -20,7 +20,7 @@ namespace MergeGame.Client.Bootstrap
         private void Awake()
         {
             _view = GetComponent<GameHudPresenter>(); _model = new GameUiModel();
-            _view.GenerateRequested += slot => StartExclusive(_context.Board.Generate(slot, OnBoard));
+            _view.GenerateRequested += GenerateFromGenerator;
             _view.MergeRequested += (source, target) => StartExclusive(_context.Board.Merge(source, target, OnBoard));
             _view.DailyRewardRequested += () => StartExclusive(_context.Progression.ClaimDailyReward(OnProgression));
             _view.QuestClaimRequested += ClaimQuest;
@@ -52,6 +52,15 @@ namespace MergeGame.Client.Bootstrap
         {
             if (_busy || _context == null) return;
             _busy = true; _view.SetInteractionEnabled(false); StartCoroutine(operation);
+        }
+        private void GenerateFromGenerator()
+        {
+            if (_context?.State?.Economy == null || _model == null) return;
+            if (_context.State.Economy.energy <= 0) { _view.SetStatus("에너지가 부족합니다."); return; }
+            var targetSlot = BoardGeneratorPlacement.FindFirstEmpty(_model.Slots);
+            if (targetSlot < 0) { _view.SetStatus("보드에 빈 칸이 없습니다."); return; }
+            // 기존 서버 계약에서는 위치가 필요하지만 실제 생성·에너지·revision은 서버 응답으로만 확정합니다.
+            StartExclusive(_context.Board.Generate(targetSlot, OnBoard));
         }
         private void EndExclusive() { _busy = false; _view.SetInteractionEnabled(true); }
         private void OnBoard(BoardCommandResult result)
