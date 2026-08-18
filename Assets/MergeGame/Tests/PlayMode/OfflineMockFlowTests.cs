@@ -5,6 +5,8 @@ using MergeGame.Client.Gameplay.Board;
 using MergeGame.Client.Gameplay.Progression;
 using NUnit.Framework;
 using UnityEngine.TestTools;
+using MergeGame.Client.Presentation;
+using UnityEngine;
 
 namespace MergeGame.Client.Tests.PlayMode
 {
@@ -32,9 +34,29 @@ namespace MergeGame.Client.Tests.PlayMode
             Assert.That(merge.Outcome, Is.EqualTo(BoardCommandOutcome.Succeeded));
             Assert.That(context.State.Board.items, Has.Length.EqualTo(1));
             Assert.That(context.State.Board.items[0].level, Is.EqualTo(2));
+            Assert.That(context.State.Board.items[0].chainId, Is.EqualTo("toy"));
+            Assert.That(Resources.Load<WorkshopItemArtCatalog>("WorkshopItemArtCatalog").Find("toy", 2).name, Is.EqualTo("Toy_Lv02"));
             Assert.That(context.State.Economy.energy, Is.EqualTo(8));
             Assert.That(progression.Outcome, Is.EqualTo(ProgressionOutcome.Succeeded));
             Assert.That(context.State.Quest.isCompleted, Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator ToyLevelSevenMerge_ProducesServerMarkedFinalLevelEight()
+        {
+            var server = new MockServerState();
+            server.Board.items = new[]
+            {
+                new BoardItemState { itemId = "toy-a", slotIndex = 0, chainId = "toy", level = 7, name = "Toy Lv.07" },
+                new BoardItemState { itemId = "toy-b", slotIndex = 1, chainId = "toy", level = 7, name = "Toy Lv.07" }
+            };
+            var context = GameClientContextFactory.CreateOffline(new MockMergeGameApiClient(server));
+            yield return context.Bootstrapper.Run(_ => { });
+            BoardCommandResult result = null;
+            yield return context.Board.Merge(0, 1, value => result = value);
+            Assert.That(result.Outcome, Is.EqualTo(BoardCommandOutcome.Succeeded));
+            Assert.That(result.Board.items[0].level, Is.EqualTo(8));
+            Assert.That(result.Board.items[0].isMaxLevel, Is.True);
         }
 
         [UnityTest]

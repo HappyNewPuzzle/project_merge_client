@@ -51,7 +51,7 @@ namespace MergeGame.Client.Api
             if (body.expectedBoardRevision != _state.Board.revision || body.expectedEconomyRevision != _state.Economy.revision) throw new MockConflictException();
             if (_state.Economy.energy <= 0) throw new MockHttpException("insufficient_energy");
             if (body.targetSlot < 0 || body.targetSlot >= _state.Board.width * _state.Board.height || Find(body.targetSlot) != null) throw new MockHttpException("invalid_target");
-            var items = new List<BoardItemState>(_state.Board.items) { new() { itemId = Guid.NewGuid().ToString("N"), slotIndex = body.targetSlot, chainId = "workshop", level = 1, name = "Seed Packet" } };
+            var items = new List<BoardItemState>(_state.Board.items) { new() { itemId = Guid.NewGuid().ToString("N"), slotIndex = body.targetSlot, chainId = "toy", level = 1, name = "Toy Lv.01" } };
             _state.Board.items = items.ToArray(); _state.Board.revision++; _state.Economy.energy--; _state.Economy.revision++;
             return new GenerateItemResponse { board = Snapshot(_state.Board), economy = Snapshot(_state.Economy) };
         });
@@ -59,8 +59,10 @@ namespace MergeGame.Client.Api
         {
             if (body.expectedRevision != _state.Board.revision) throw new MockConflictException();
             var source = Find(body.sourceSlot); var target = Find(body.targetSlot);
-            if (source == null || target == null || source.level != target.level || source.chainId != target.chainId) throw new MockHttpException("invalid_merge");
-            var items = new List<BoardItemState>(_state.Board.items); items.Remove(source); target.level++; target.name = "Workshop Item Lv." + target.level;
+            if (source == null || target == null || source.level != target.level || source.chainId != target.chainId || source.isMaxLevel) throw new MockHttpException("invalid_merge");
+            var items = new List<BoardItemState>(_state.Board.items); items.Remove(source); target.level++;
+            target.name = target.chainId == "toy" ? $"Toy Lv.{target.level:00}" : "Workshop Item Lv." + target.level;
+            target.isMaxLevel = target.chainId == "toy" && target.level >= 8;
             _state.Board.items = items.ToArray(); _state.Board.revision++; _state.Quest.currentCount++; _state.Quest.revision++;
             _state.Quest.isCompleted = _state.Quest.currentCount >= _state.Quest.targetCount; return Snapshot(_state.Board);
         });

@@ -104,6 +104,14 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(catalog.Find("workshop", 1).rect.height, Is.EqualTo(418));
             Assert.That(catalog.Find("unknown", 1), Is.Null);
         }
+        [Test] public void ItemArtCatalog_ContainsToyLevelsOneThroughEight()
+        {
+            var catalog = Resources.Load<WorkshopItemArtCatalog>("WorkshopItemArtCatalog");
+            Assert.That(catalog.toySprites, Has.Length.EqualTo(8));
+            Assert.That(catalog.Find("toy", 1).name, Is.EqualTo("Toy_Lv01"));
+            Assert.That(catalog.Find("toy", 8).name, Is.EqualTo("Toy_Lv08"));
+            Assert.That(catalog.Find("toy", 9), Is.Null);
+        }
         [Test] public void QuestClaimIntent_KeepsKeyForTheSameUserIntent()
         {
             var intent = QuestClaimIntent.Create("first-merge");

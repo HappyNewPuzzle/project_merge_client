@@ -22,3 +22,12 @@ MonoBehaviour:
   - {fileID: -6414853484182429883, guid: cf92901630251dc4384eede81fc407c8, type: 3}
   - {fileID: -3582432612211085946, guid: cf92901630251dc4384eede81fc407c8, type: 3}
   - {fileID: -5429365920314895697, guid: cf92901630251dc4384eede81fc407c8, type: 3}
+  toySprites:
+  - {fileID: 21300000, guid: 276a11ed0ab465c4fabc270a4916f387, type: 3}
+  - {fileID: 21300000, guid: b6692dd6ddb296c49aaaa49e064f1487, type: 3}
+  - {fileID: 21300000, guid: 7c3237cebe90db54bbc793975f3e2672, type: 3}
+  - {fileID: 21300000, guid: 7d63ac7a1f8803d45851e21c5b48b484, type: 3}
+  - {fileID: 21300000, guid: 26a0597fcad4101429a6d62f5f67fb72, type: 3}
+  - {fileID: 21300000, guid: 122d1a90adb48d441a194b3fd9d3ab0c, type: 3}
+  - {fileID: 21300000, guid: 607ba1b4f20e9cd43bf411fc1a3699e5, type: 3}
+  - {fileID: 21300000, guid: 6ddeef6588227c54db175a04edcbe681, type: 3}
