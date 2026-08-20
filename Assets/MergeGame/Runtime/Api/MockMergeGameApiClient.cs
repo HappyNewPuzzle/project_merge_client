@@ -61,11 +61,24 @@ namespace MergeGame.Client.Api
             var source = Find(body.sourceSlot); var target = Find(body.targetSlot);
             if (source == null || target == null || source.level != target.level || source.chainId != target.chainId || source.isMaxLevel) throw new MockHttpException("invalid_merge");
             var items = new List<BoardItemState>(_state.Board.items); items.Remove(source); target.level++;
-            target.name = target.chainId == "toy" ? $"Toy Lv.{target.level:00}" : "Workshop Item Lv." + target.level;
-            target.isMaxLevel = target.chainId == "toy" && target.level >= 8;
+            // Food/Rest는 실제 생성 API 기능이 아니라, 전달받은 보드 상태의 공통 머지 표시를 검증하기 위한 Mock 체인입니다.
+            // 실서버의 체인 카탈로그와 최종 단계 판정은 여전히 서버 응답이 유일한 진실 원천입니다.
+            target.name = $"{ToDisplayName(target.chainId)} Lv.{target.level:00}";
+            target.isMaxLevel = IsEightLevelArtLine(target.chainId) && target.level >= 8;
             _state.Board.items = items.ToArray(); _state.Board.revision++; _state.Quest.currentCount++; _state.Quest.revision++;
             _state.Quest.isCompleted = _state.Quest.currentCount >= _state.Quest.targetCount; return Snapshot(_state.Board);
         });
+
+        private static bool IsEightLevelArtLine(string chainId) =>
+            chainId == "toy" || chainId == "food" || chainId == "rest";
+
+        private static string ToDisplayName(string chainId) => chainId switch
+        {
+            "toy" => "Toy",
+            "food" => "Food",
+            "rest" => "Rest",
+            _ => "Workshop Item"
+        };
         public IEnumerator ClaimDailyReward(RevisionRequest body, Action<ApiResult<EconomySnapshot>> completed) => Respond(completed, () =>
         {
             if (body.expectedRevision != _state.Economy.revision) throw new MockConflictException();
@@ -124,5 +137,32 @@ namespace MergeGame.Client.Api
         public EconomySnapshot Economy { get; } = new() { playerId = "mock-player", energy = 10, maxEnergy = 10, coins = 100, revision = 1 };
         public QuestSnapshot Quest { get; } = new() { questId = "merge-two", targetCount = 1, rewardCoins = 25, revision = 1 };
         public List<FriendSnapshot> Friends { get; } = new();
+
+        /// <summary>
+        /// Editor Offline Game View에서 준비된 세 아트 체인을 한 번에 확인하기 위한 Mock 전용 fixture입니다.
+        /// 실서버 시작 보드나 콘텐츠 카탈로그를 의미하지 않으며 Production 조립 경로에서는 사용하지 않습니다.
+        /// </summary>
+        public static MockServerState CreateArtShowcase()
+        {
+            var state = new MockServerState();
+            state.Board.items = new[]
+            {
+                MockItem("toy-01-a", 0, "toy", 1), MockItem("toy-01-b", 1, "toy", 1),
+                MockItem("food-01-a", 2, "food", 1), MockItem("food-01-b", 3, "food", 1),
+                MockItem("rest-01-a", 4, "rest", 1), MockItem("rest-01-b", 5, "rest", 1),
+                MockItem("toy-02-a", 6, "toy", 2), MockItem("toy-02-b", 7, "toy", 2)
+            };
+            return state;
+        }
+
+        private static BoardItemState MockItem(string itemId, int slotIndex, string chainId, int level) => new()
+        {
+            itemId = itemId,
+            slotIndex = slotIndex,
+            chainId = chainId,
+            level = level,
+            name = $"{char.ToUpperInvariant(chainId[0])}{chainId.Substring(1)} Lv.{level:00}",
+            isMaxLevel = level >= 8
+        };
     }
 }

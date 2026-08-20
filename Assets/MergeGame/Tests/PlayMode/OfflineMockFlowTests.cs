@@ -60,6 +60,83 @@ namespace MergeGame.Client.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator PreparedArtLines_MergeLevelOneAndLevelSevenToExpectedSnapshots()
+        {
+            foreach (var chainId in new[] { "toy", "food", "rest" })
+            {
+                yield return AssertMockMerge(chainId, 1, 2, false);
+                yield return AssertMockMerge(chainId, 7, 8, true);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator ArtShowcase_ContainsThreeChainsAndToyGeneratorStillCreatesOnlyToy()
+        {
+            var server = MockServerState.CreateArtShowcase();
+            var context = GameClientContextFactory.CreateOffline(new MockMergeGameApiClient(server));
+            yield return context.Bootstrapper.Run(_ => { });
+
+            Assert.That(context.State.Board.items, Has.Length.EqualTo(8));
+            Assert.That(System.Array.FindAll(context.State.Board.items, item => item.chainId == "toy"), Has.Length.EqualTo(4));
+            Assert.That(System.Array.FindAll(context.State.Board.items, item => item.chainId == "food"), Has.Length.EqualTo(2));
+            Assert.That(System.Array.FindAll(context.State.Board.items, item => item.chainId == "rest"), Has.Length.EqualTo(2));
+
+            BoardCommandResult generated = null;
+            yield return context.Board.Generate(8, value => generated = value);
+            Assert.That(generated.Outcome, Is.EqualTo(BoardCommandOutcome.Succeeded));
+            Assert.That(System.Array.Find(generated.Board.items, item => item.slotIndex == 8).chainId, Is.EqualTo("toy"));
+        }
+
+        [UnityTest]
+        public IEnumerator PreparedArtLines_RejectAllCrossChainMerges()
+        {
+            yield return AssertRejectedMerge("toy", "food", 1, false);
+            yield return AssertRejectedMerge("toy", "rest", 1, false);
+            yield return AssertRejectedMerge("food", "rest", 1, false);
+        }
+
+        [UnityTest]
+        public IEnumerator PreparedArtLines_RejectServerMarkedLevelEightMerges()
+        {
+            yield return AssertRejectedMerge("toy", "toy", 8, true);
+            yield return AssertRejectedMerge("food", "food", 8, true);
+            yield return AssertRejectedMerge("rest", "rest", 8, true);
+        }
+
+        private static IEnumerator AssertRejectedMerge(string sourceChain, string targetChain, int level, bool isMaxLevel)
+        {
+            var server = new MockServerState();
+            server.Board.items = new[]
+            {
+                new BoardItemState { itemId = "source", slotIndex = 0, chainId = sourceChain, level = level, isMaxLevel = isMaxLevel },
+                new BoardItemState { itemId = "target", slotIndex = 1, chainId = targetChain, level = level, isMaxLevel = isMaxLevel }
+            };
+            var context = GameClientContextFactory.CreateOffline(new MockMergeGameApiClient(server));
+            yield return context.Bootstrapper.Run(_ => { });
+            BoardCommandResult result = null;
+            yield return context.Board.Merge(0, 1, value => result = value);
+            Assert.That(result.Outcome, Is.EqualTo(BoardCommandOutcome.Failed), $"{sourceChain} -> {targetChain}, Lv{level}");
+            Assert.That(server.Board.revision, Is.EqualTo(1));
+        }
+
+        private static IEnumerator AssertMockMerge(string chainId, int sourceLevel, int expectedLevel, bool expectedMaxLevel)
+        {
+            var server = new MockServerState();
+            server.Board.items = new[]
+            {
+                new BoardItemState { itemId = chainId + "-a", slotIndex = 0, chainId = chainId, level = sourceLevel, name = chainId },
+                new BoardItemState { itemId = chainId + "-b", slotIndex = 1, chainId = chainId, level = sourceLevel, name = chainId }
+            };
+            var context = GameClientContextFactory.CreateOffline(new MockMergeGameApiClient(server));
+            yield return context.Bootstrapper.Run(_ => { });
+            BoardCommandResult result = null;
+            yield return context.Board.Merge(0, 1, value => result = value);
+            Assert.That(result.Outcome, Is.EqualTo(BoardCommandOutcome.Succeeded), chainId);
+            Assert.That(result.Board.items[0].level, Is.EqualTo(expectedLevel), chainId);
+            Assert.That(result.Board.items[0].isMaxLevel, Is.EqualTo(expectedMaxLevel), chainId);
+        }
+
+        [UnityTest]
         public IEnumerator InjectedSuspension_IsClassifiedWithoutNetwork()
         {
             var mock = new MockMergeGameApiClient { NextScenario = MockApiScenario.AccountSuspended, LatencyFrames = 1 };

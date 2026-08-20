@@ -11,14 +11,14 @@ namespace MergeGame.Client.Presentation
         public GameUiPhase Phase { get; private set; } = GameUiPhase.Bootstrapping;
         public string Message { get; private set; } = "서버 상태를 불러오는 중입니다.";
         public BoardSlotView[] Slots { get; private set; } = Array.Empty<BoardSlotView>();
-        public int Energy { get; private set; } public long Coins { get; private set; }
+        public int Energy { get; private set; } public int MaxEnergy { get; private set; } public long Coins { get; private set; }
         public string QuestText { get; private set; } = ""; public string FriendCode { get; private set; } = "";
         public FriendSnapshot[] Friends { get; private set; } = Array.Empty<FriendSnapshot>();
 
         public void Apply(IGameStateStore state)
         {
             Slots = BoardPresentationState.Create(state.Board);
-            Energy = state.Economy?.energy ?? 0; Coins = state.Economy?.coins ?? 0;
+            Energy = state.Economy?.energy ?? 0; MaxEnergy = state.Economy?.maxEnergy ?? 0; Coins = state.Economy?.coins ?? 0;
             QuestText = state.Quest == null ? "" : $"{state.Quest.currentCount}/{state.Quest.targetCount}";
             FriendCode = state.Social?.friendCode ?? state.SocialProfile?.friendCode ?? "";
             Friends = state.Social?.friends ?? Array.Empty<FriendSnapshot>();

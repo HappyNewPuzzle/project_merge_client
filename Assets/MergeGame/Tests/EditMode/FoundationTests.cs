@@ -78,6 +78,12 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(BoardMergeRules.CanMerge(source, wrongChain), Is.False);
             Assert.That(BoardMergeRules.CanMerge(source, source), Is.False);
         }
+        [Test] public void BoardMergeRules_RejectServerMarkedMaxLevel()
+        {
+            var source = new BoardSlotView(0, new BoardItemState { itemId = "a", chainId = "toy", level = 8, isMaxLevel = true });
+            var target = new BoardSlotView(1, new BoardItemState { itemId = "b", chainId = "toy", level = 8, isMaxLevel = true });
+            Assert.That(BoardMergeRules.CanMerge(source, target), Is.False);
+        }
         [Test] public void GeneratorPlacement_SelectsFirstEmptyAndRejectsFullBoard()
         {
             var empty = new BoardSlotView(3, null);
@@ -92,6 +98,74 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(insets.Top, Is.EqualTo(42.666f).Within(0.01f));
             Assert.That(insets.Right, Is.EqualTo(0));
             Assert.That(insets.Bottom, Is.EqualTo(42.666f).Within(0.01f));
+        }
+        [TestCase(1280f, 112f)]
+        [TestCase(900f, 112f)]
+        [TestCase(720f, 92.857f)]
+        [TestCase(560f, 62f)]
+        public void BoardSlotHeight_RespondsToAvailableVerticalSpace(float viewportHeight, float expected)
+        {
+            Assert.That(GameHudPresenter.CalculateBoardSlotHeight(viewportHeight), Is.EqualTo(expected).Within(0.01f));
+        }
+        [TestCase(720f, 200f, 14f, 5f, 112f)]
+        [TestCase(640f, 260f, 12f, 4f, 87f)]
+        [TestCase(480f, 280f, 12f, 4f, 48f)]
+        public void FittedBoardHeight_UsesActualRemainingViewport(
+            float viewport, float boardTop, float frameExtras, float margins, float expected)
+        {
+            Assert.That(GameHudPresenter.CalculateFittedBoardSlotHeight(viewport, boardTop, frameExtras, margins),
+                Is.EqualTo(expected).Within(0.01f));
+        }
+        [Test] public void PortraitBoard_UsesSquareCellsWithoutConsumingMascotSpace()
+        {
+            Assert.That(GameHudPresenter.CalculatePortraitBoardSlotHeight(1280f, 330f, 14f, 5f, 612f, 180f),
+                Is.EqualTo(148f).Within(0.01f));
+            Assert.That(GameHudPresenter.CalculatePortraitBoardSlotHeight(900f, 250f, 14f, 5f, 612f, 0f),
+                Is.EqualTo(148f).Within(0.01f));
+            Assert.That(GameHudPresenter.CalculatePortraitBoardSlotHeight(720f, 300f, 14f, 5f, 612f, 0f),
+                Is.EqualTo(95.5f).Within(0.01f));
+        }
+        [TestCase(620f, 155f)]
+        [TestCase(720f, 180f)]
+        [TestCase(900f, 196f)]
+        public void MascotSize_TracksPanelWidthWithinReadableLimits(float width, float expected)
+        {
+            Assert.That(GameHudPresenter.CalculateMascotSize(width), Is.EqualTo(expected).Within(0.01f));
+        }
+        [Test] public void NavigationReserve_IsSafeBeforeNavigationExists()
+        {
+            Assert.That(GameHudPresenter.CalculateNavigationReserve(null), Is.Zero);
+        }
+        [Test] public void ItemVisualSizing_NormalizesTransparentPaddingWithoutChangingSprites()
+        {
+            var catalog = Resources.Load<WorkshopItemArtCatalog>("WorkshopItemArtCatalog");
+            Assert.That(catalog.toyVisualScales, Has.Length.EqualTo(8));
+            Assert.That(catalog.foodVisualScales, Has.Length.EqualTo(8));
+            Assert.That(catalog.restVisualScales, Has.Length.EqualTo(8));
+            Assert.That(catalog.FindVisualScale("toy", 1), Is.EqualTo(1.69f));
+            Assert.That(catalog.FindVisualScale("toy", 4), Is.EqualTo(1.25f));
+            Assert.That(catalog.FindVisualScale("toy", 8), Is.EqualTo(0.90f));
+            Assert.That(catalog.FindVisualScale("food", 1), Is.GreaterThan(catalog.FindVisualScale("food", 8)));
+            Assert.That(catalog.FindVisualScale("rest", 1), Is.InRange(0.9f, 1f));
+            Assert.That(catalog.FindVisualScale("unknown", 1), Is.EqualTo(1f));
+        }
+        [Test] public void ItemAnimation_ComposesWithAndRestoresBaseVisualScale()
+        {
+            Assert.That(GameHudPresenter.ComposeVisualScale(1.25f, 0.82f), Is.EqualTo(1.025f).Within(0.001f));
+            Assert.That(GameHudPresenter.ComposeVisualScale(1.25f, 1.13f), Is.EqualTo(1.4125f).Within(0.001f));
+            Assert.That(GameHudPresenter.ComposeVisualScale(1.25f, 1f), Is.EqualTo(1.25f).Within(0.001f));
+        }
+        [Test] public void Mascot_HidesBeforeBoardOnCompactViewport()
+        {
+            Assert.That(GameHudPresenter.IsCompactMascotViewport(0f), Is.True);
+            Assert.That(GameHudPresenter.IsCompactMascotViewport(759f), Is.True);
+            Assert.That(GameHudPresenter.IsCompactMascotViewport(979f), Is.True);
+            Assert.That(GameHudPresenter.IsCompactMascotViewport(980f), Is.False);
+        }
+        [Test] public void BoardFeedbackDurations_RemainShortAndDoNotBecomeInputLocks()
+        {
+            Assert.That(GameHudPresenter.SuccessFeedbackDurationMs, Is.InRange(200, 400));
+            Assert.That(GameHudPresenter.InvalidDropFeedbackDurationMs, Is.LessThanOrEqualTo(200));
         }
         [Test] public void WorkshopArtCatalog_ContainsNineOrderedSprites()
         {
@@ -111,6 +185,35 @@ namespace MergeGame.Client.Tests.EditMode
             Assert.That(catalog.Find("toy", 1).name, Is.EqualTo("Toy_Lv01"));
             Assert.That(catalog.Find("toy", 8).name, Is.EqualTo("Toy_Lv08"));
             Assert.That(catalog.Find("toy", 9), Is.Null);
+        }
+        [TestCase("toy", "Toy")]
+        [TestCase("food", "Food")]
+        [TestCase("rest", "Rest")]
+        public void ItemArtCatalog_ContainsEightOrderedSpritesForPreparedArtLines(string chainId, string prefix)
+        {
+            var catalog = Resources.Load<WorkshopItemArtCatalog>("WorkshopItemArtCatalog");
+            Assert.That(catalog.Find(chainId, 1).name, Is.EqualTo($"{prefix}_Lv01"));
+            Assert.That(catalog.Find(chainId, 8).name, Is.EqualTo($"{prefix}_Lv08"));
+            Assert.That(catalog.Find(chainId, 0), Is.Null);
+            Assert.That(catalog.Find(chainId, 9), Is.Null);
+            Assert.That(catalog.Find("unknown", 1), Is.Null);
+        }
+        [Test] public void HudArtCatalog_ContainsGeneratorAndCurrencySprites()
+        {
+            var catalog = Resources.Load<WorkshopHudArtCatalog>("WorkshopHudArtCatalog");
+            Assert.That(catalog, Is.Not.Null);
+            Assert.That(catalog.toyGenerator.name, Is.EqualTo("Generator_Toy"));
+            Assert.That(catalog.foodGenerator.name, Is.EqualTo("Generator_Food"));
+            Assert.That(catalog.restGenerator.name, Is.EqualTo("Generator_Rest"));
+            Assert.That(catalog.coin.name, Is.EqualTo("Currency_Coin"));
+            Assert.That(catalog.energy.name, Is.EqualTo("Currency_Energy"));
+            Assert.That(catalog.gem.name, Is.EqualTo("Currency_Gem"));
+            Assert.That(catalog.defaultMascot.name, Is.EqualTo("Cat_Mascot_Default"));
+            Assert.That(catalog.roomBackground.name, Is.EqualTo("CatMerge_Room_Background"));
+            Assert.That(catalog.navHome.name, Is.EqualTo("UI_Nav_Home"));
+            Assert.That(catalog.navCollection.name, Is.EqualTo("UI_Nav_Collection"));
+            Assert.That(catalog.navShop.name, Is.EqualTo("UI_Nav_Shop"));
+            Assert.That(catalog.navQuest.name, Is.EqualTo("UI_Nav_Quest"));
         }
         [Test] public void QuestClaimIntent_KeepsKeyForTheSameUserIntent()
         {

@@ -31,3 +31,48 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 122d1a90adb48d441a194b3fd9d3ab0c, type: 3}
   - {fileID: 21300000, guid: 607ba1b4f20e9cd43bf411fc1a3699e5, type: 3}
   - {fileID: 21300000, guid: 6ddeef6588227c54db175a04edcbe681, type: 3}
+  foodSprites:
+  - {fileID: 21300000, guid: 6e32ace6d7cd05843a460d82b3f04b52, type: 3}
+  - {fileID: 21300000, guid: 58c7f51a6ea48b046b5c3fd7f08d1cb6, type: 3}
+  - {fileID: 21300000, guid: c94c1f64647ca84488a9a15b26cf59b9, type: 3}
+  - {fileID: 21300000, guid: 817da5e539ca2b24f88f512d8cca65fd, type: 3}
+  - {fileID: 21300000, guid: c5ef85d5fb99ac448b9d08beaaa2e345, type: 3}
+  - {fileID: 21300000, guid: 355c09667207f5e44b1d9cabd54f2374, type: 3}
+  - {fileID: 21300000, guid: af2c341e8d5e42a42bfe65d42ab6d189, type: 3}
+  - {fileID: 21300000, guid: 8e7c965d3be47464a8f15b8c9f9402d4, type: 3}
+  restSprites:
+  - {fileID: 21300000, guid: 737e2f43b8f440043965c360b98b1f4b, type: 3}
+  - {fileID: 21300000, guid: 00758f19168ed4b4cbe013f5c46d7ed7, type: 3}
+  - {fileID: 21300000, guid: d393fadd905caf34fb37e1238e3e13c5, type: 3}
+  - {fileID: 21300000, guid: 0b451cb1c14489143ad3414990503bc6, type: 3}
+  - {fileID: 21300000, guid: 1f0884b2c544f62468af1abb288fc53a, type: 3}
+  - {fileID: 21300000, guid: 4ecc119c71dc60d44934040b4d31ad00, type: 3}
+  - {fileID: 21300000, guid: e87fbfd52563ed84abcca1034b2753d9, type: 3}
+  - {fileID: 21300000, guid: 6b4fba5a7cfe098428d63643e2530386, type: 3}
+  toyVisualScales:
+  - 1.69
+  - 1.18
+  - 1.45
+  - 1.25
+  - 1.06
+  - 0.82
+  - 1.03
+  - 0.9
+  foodVisualScales:
+  - 1.35
+  - 0.97
+  - 0.97
+  - 0.97
+  - 0.97
+  - 0.97
+  - 0.97
+  - 0.97
+  restVisualScales:
+  - 0.95
+  - 0.97
+  - 0.97
+  - 0.98
+  - 0.95
+  - 0.97
+  - 0.95
+  - 0.97

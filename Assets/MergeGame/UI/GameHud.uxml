@@ -1,26 +1,78 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <Style src="GameHud.uss" />
-    <ui:ScrollView class="screen" mode="Vertical">
-        <ui:Label text="Project Merge" class="title" />
-        <ui:Label name="status" text="서버 상태를 불러오는 중입니다." class="status" />
-        <ui:VisualElement class="summary">
-            <ui:Label name="economy" text="에너지 0 · 코인 0" />
-            <ui:Label name="quest" text="퀘스트" />
-            <ui:Label name="friend-code" text="친구 코드" />
+    <ui:VisualElement class="screen">
+        <ui:VisualElement name="room-background" class="room-background" picking-mode="Ignore" />
+        <ui:VisualElement class="top-hud">
+            <ui:Label text="CAT MERGE" class="game-title" />
+            <ui:VisualElement class="currency-list">
+                <ui:VisualElement class="currency-capsule">
+                    <ui:VisualElement name="energy-icon" class="currency-icon" />
+                    <ui:Label name="energy-value" text="0 / 0" class="currency-value" />
+                </ui:VisualElement>
+                <ui:VisualElement class="currency-capsule">
+                    <ui:VisualElement name="coin-icon" class="currency-icon" />
+                    <ui:Label name="coin-value" text="0" class="currency-value" />
+                </ui:VisualElement>
+                <!-- Gem은 서버 잔액 계약이 생길 때 표시합니다. -->
+                <ui:VisualElement name="gem-capsule" class="currency-capsule feature-placeholder">
+                    <ui:VisualElement name="gem-icon" class="currency-icon" />
+                </ui:VisualElement>
+            </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement class="generator-panel">
-            <ui:Button name="generator" text="생성기\n눌러서 아이템 생산" class="generator" tooltip="에너지 1을 사용해 빈 슬롯에 레벨 1 아이템을 생성합니다." />
+        <ui:VisualElement name="status-panel" class="status-panel hidden">
+            <ui:Label name="status" text="서버 상태를 불러오는 중입니다." class="status" />
+            <ui:Button name="retry" text="다시 시도" class="status-action" />
         </ui:VisualElement>
-        <ui:VisualElement name="board" class="board" />
-        <ui:Label text="생성기를 눌러 아이템 생산 · 같은 레벨 아이템 위로 드래그하면 머지" class="board-help" />
-        <ui:VisualElement class="actions">
+        <ui:VisualElement class="quest-card">
+            <ui:VisualElement class="quest-copy">
+                <ui:Label text="오늘의 퀘스트" class="section-eyebrow" />
+                <ui:Label name="quest" text="퀘스트 정보를 불러오는 중입니다." class="quest-title" />
+            </ui:VisualElement>
+            <ui:Button name="claim" text="보상 받기" class="quest-action" />
+        </ui:VisualElement>
+        <ui:VisualElement class="play-area">
+            <ui:VisualElement class="generator-panel">
+                <ui:Label text="장난감 상자" class="generator-title" />
+                <ui:Button name="generator" text="" class="generator" tooltip="눌러서 아이템을 생성합니다." />
+                <ui:Label text="눌러서 아이템 만들기" class="generator-hint" />
+            </ui:VisualElement>
+            <ui:VisualElement class="board-frame">
+                <ui:VisualElement name="board" class="board" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <!-- 개별 투명 고양이 Sprite가 연결된 경우에만 Presenter가 표시합니다. -->
+        <ui:VisualElement name="mascot-root" class="mascot-area hidden">
+            <ui:VisualElement name="mascot-image" class="mascot-art" />
+            <ui:VisualElement name="mascot-speech-bubble" class="speech-bubble">
+                <ui:Label name="mascot-message" text="같은 장난감을 합쳐봐!" class="mascot-message" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="bottom-navigation" class="bottom-navigation">
+            <ui:Button name="nav-home" class="navigation-tab navigation-tab-selected">
+                <ui:VisualElement name="nav-home-icon" class="navigation-icon" picking-mode="Ignore" />
+                <ui:Label text="홈" class="navigation-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="nav-collection" class="navigation-tab" enabled="false">
+                <ui:VisualElement name="nav-collection-icon" class="navigation-icon" picking-mode="Ignore" />
+                <ui:Label text="도감" class="navigation-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="nav-shop" class="navigation-tab" enabled="false">
+                <ui:VisualElement name="nav-shop-icon" class="navigation-icon" picking-mode="Ignore" />
+                <ui:Label text="상점" class="navigation-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="nav-quest" class="navigation-tab" enabled="false">
+                <ui:VisualElement name="nav-quest-icon" class="navigation-icon" picking-mode="Ignore" />
+                <ui:Label text="퀘스트" class="navigation-label" picking-mode="Ignore" />
+            </ui:Button>
+        </ui:VisualElement>
+        <!-- 기존 기능은 보존하되 일반 플레이 화면에서는 숨깁니다. -->
+        <ui:VisualElement name="development-actions" class="development-only">
             <ui:Button name="daily" text="일일 보상" />
-            <ui:Button name="claim" text="퀘스트 보상" />
+            <ui:Label name="friend-code" text="친구 코드" />
             <ui:TextField name="friend-input" label="친구 코드" max-length="8" />
             <ui:Button name="add-friend" text="친구 추가" />
             <ui:VisualElement name="friends" />
-            <ui:Button name="retry" text="다시 시도" />
             <ui:Button name="logout" text="로그아웃" />
         </ui:VisualElement>
-    </ui:ScrollView>
+    </ui:VisualElement>
 </ui:UXML>
